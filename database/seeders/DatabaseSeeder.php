@@ -3,23 +3,27 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Compte;
+use App\Models\Transaction;
 use Illuminate\Database\Seeder;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::factory(10)->create()->each(function ($user) {
+            Compte::factory(3)->create([
+                'user_id' => $user->id
+            ]);
+        });
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $comptes = Compte::all();
+        Transaction::factory(30)->make()->each(function ($transaction) use ($comptes) {
+            $transaction->compte_id = $comptes->random()->id;
+            $transaction->save();
+        });
     }
 }
