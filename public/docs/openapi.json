@@ -8,9 +8,102 @@
   "paths": {
     "/api/comptes": {
       "get": {
-        "summary": "Liste des comptes (protégé)",
+        "summary": "Lister tous les comptes",
+        "description": "Récupère une liste paginée de comptes avec possibilité de filtrage et tri",
+        "tags": ["Comptes"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 },
+            "description": "Numéro de page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 },
+            "description": "Nombre d'éléments par page"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["epargne", "cheque"] },
+            "description": "Filtrer par type de compte"
+          },
+          {
+            "name": "statut",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["actif", "bloque", "ferme"] },
+            "description": "Filtrer par statut"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Recherche par numéro de compte ou nom du titulaire"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["dateCreation", "solde", "titulaire"], "default": "dateCreation" },
+            "description": "Champ de tri"
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" },
+            "description": "Ordre de tri"
+          }
+        ],
         "responses": {
-          "200": { "description": "OK" }
+          "200": {
+            "description": "Liste des comptes récupérée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComptesResponse"
+                },
+                "examples": {
+                  "default": {
+                    "summary": "Exemple de réponse",
+                    "value": {
+                      "success": true,
+                      "data": [
+                        {
+                          "id": "550e8400-e29b-41d4-a716-446655440000",
+                          "numeroCompte": "C00123456",
+                          "titulaire": "Amadou Diallo",
+                          "type": "epargne",
+                          "solde": 1250000,
+                          "devise": "FCFA",
+                          "dateCreation": "2025-10-24T01:24:10.641Z",
+                          "statut": "actif",
+                          "metadonnees": {
+                            "derniereModification": "2025-10-24T01:24:10.641Z",
+                            "version": 1
+                          }
+                        }
+                      ],
+                      "pagination": {
+                        "currentPage": 0,
+                        "totalPages": 0,
+                        "totalItems": 0,
+                        "itemsPerPage": 0,
+                        "hasNext": true,
+                        "hasPrevious": true
+                      },
+                      "links": {
+                        "self": "string",
+                        "next": "string",
+                        "first": "string",
+                        "last": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -19,6 +112,59 @@
         "summary": "Endpoint de démonstration public pour la doc",
         "responses": {
           "200": { "description": "OK" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Compte": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "numeroCompte": { "type": "string" },
+          "titulaire": { "type": "string" },
+          "type": { "type": "string", "enum": ["epargne", "cheque"] },
+          "solde": { "type": "number" },
+          "devise": { "type": "string" },
+          "dateCreation": { "type": "string", "format": "date-time" },
+          "statut": { "type": "string", "enum": ["actif", "bloque", "ferme"] },
+          "metadonnees": {
+            "type": "object",
+            "properties": {
+              "derniereModification": { "type": "string", "format": "date-time" },
+              "version": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "currentPage": { "type": "integer" },
+          "totalPages": { "type": "integer" },
+          "totalItems": { "type": "integer" },
+          "itemsPerPage": { "type": "integer" },
+          "hasNext": { "type": "boolean" },
+          "hasPrevious": { "type": "boolean" }
+        }
+      },
+      "Links": {
+        "type": "object",
+        "properties": {
+          "self": { "type": "string" },
+          "next": { "type": "string" },
+          "first": { "type": "string" },
+          "last": { "type": "string" }
+        }
+      },
+      "ComptesResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Compte" } },
+          "pagination": { "$ref": "#/components/schemas/Pagination" },
+          "links": { "$ref": "#/components/schemas/Links" }
         }
       }
     }

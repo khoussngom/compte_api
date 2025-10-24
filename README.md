@@ -59,3 +59,32 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Quick local dev: seed demo data
+
+When developing locally you can populate the DB with demo data (users, comptes, transactions) used by the documentation and UI.
+
+Steps:
+
+1. Configure `.env` for your local DB.
+2. Run migrations:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+This will execute `DatabaseSeeder` which inserts demo users, comptes and transactions.
+
+Alternatively, to run only the seeder without dropping the database:
+
+```bash
+php artisan db:seed --class=Database\\Seeders\\SeedDemoData
+```
+
+If you're running inside Docker (via `docker-compose` in this repo), rebuild and redeploy the container so that the entrypoint clears caches and runs migrations/seeds:
+
+```bash
+docker compose build --pull
+docker compose up -d
+```
+
