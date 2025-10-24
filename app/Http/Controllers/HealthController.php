@@ -49,6 +49,23 @@ class HealthController extends Controller
 
         $result['checks']['env_sanity'] = $envChecks;
 
+        // Also include non-sensitive view of the effective DB config (from config()),
+        // which helps detect cached/malformed values created at build time.
+        try {
+            $dbConfig = config('database.connections.pgsql', []);
+            $safeDbConfig = [
+                'host' => $dbConfig['host'] ?? null,
+                'port' => $dbConfig['port'] ?? null,
+                'database' => $dbConfig['database'] ?? null,
+                'username' => $dbConfig['username'] ?? null,
+                'sslmode' => $dbConfig['sslmode'] ?? null,
+            ];
+            $result['checks']['config_database'] = $safeDbConfig;
+        } catch (\Throwable $e) {
+            $result['checks']['config_database'] = 'error';
+            $result['checks']['config_database_error'] = $e->getMessage();
+        }
+
         // DB connection
         try {
             DB::connection()->getPdo();
