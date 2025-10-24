@@ -8,7 +8,15 @@
   "paths": {
     "/api/comptes": {
       "get": {
-        "summary": "Liste des comptes",
+        "summary": "Liste des comptes (protégé)",
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      }
+    },
+    "/api/comptes-demo": {
+      "get": {
+        "summary": "Endpoint de démonstration public pour la doc",
         "responses": {
           "200": { "description": "OK" }
         }
