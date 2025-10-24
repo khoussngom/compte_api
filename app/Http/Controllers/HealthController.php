@@ -19,6 +19,36 @@ class HealthController extends Controller
             'checks' => [],
         ];
 
+        // Add non-sensitive env sanity checks to help remote debugging
+        $envChecks = [];
+        $dbHost = env('DB_HOST');
+        $dbPort = env('DB_PORT');
+        $dbName = env('DB_DATABASE');
+        $dbUrl = env('DATABASE_URL') ?? env('DB_URL');
+
+        $envChecks['db_host_present'] = !empty($dbHost);
+        $envChecks['db_port_numeric'] = is_numeric($dbPort);
+        $envChecks['db_database_present'] = !empty($dbName);
+        $envChecks['database_url_present'] = !empty($dbUrl);
+
+        // detect obviously malformed values that have been seen in deployments
+    $suspect = false;
+    $suspectPatterns = ['client_encoding=', 'dbname=', '${DB_PORT}'];
+        foreach ($suspectPatterns as $p) {
+            if ($dbHost && str_contains($dbHost, $p)) {
+                $suspect = true;
+            }
+            if ($dbPort && str_contains($dbPort, $p)) {
+                $suspect = true;
+            }
+            if ($dbUrl && str_contains($dbUrl, $p)) {
+                $suspect = true;
+            }
+        }
+        $envChecks['env_values_suspect'] = $suspect;
+
+        $result['checks']['env_sanity'] = $envChecks;
+
         // DB connection
         try {
             DB::connection()->getPdo();
