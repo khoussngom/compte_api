@@ -7,19 +7,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('clients', function (Blueprint $table) {
             $table->id();
-            $table->string('nom');
-            $table->string('prenom');
-            $table->string('email');
-            $table->string('telephone')->nullable();
-            $table->string('password');
+            $table->bigInteger('user_id')->notNull();
             $table->timestamps();
+            // foreign key added in a separate migration
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('clients');
     }
 };

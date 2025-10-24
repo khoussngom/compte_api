@@ -23,12 +23,14 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $uuid = (string) \Illuminate\Support\Str::uuid();
         return [
-            'name' => fake()->name(),
+            'id' => $uuid,
+            'nom' => fake()->lastName(),
+            'prenom' => fake()->firstName(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'telephone' => fake()->phoneNumber(),
             'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
         ];
     }
 
