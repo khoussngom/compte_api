@@ -1,0 +1,18 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Compte API",
+    "version": "v1",
+    "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
+  },
+  "paths": {
+    "/api/comptes": {
+      "get": {
+        "summary": "Liste des comptes",
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      }
+    }
+  }
+}
