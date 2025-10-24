@@ -13,12 +13,11 @@ return new class extends Migration
         Schema::dropIfExists('transactions');
         Schema::create('account_transactions', function (Blueprint $table) {
             $table->id();
-            // utiliser bigint ici (même type que comptes.id). La contrainte FK est ajoutée dans une migration séparée
-            $table->bigInteger('compte_id')->notNull();
+            // créer la FK inline pour s'assurer que le type et la contrainte sont définis ensemble
+            $table->foreignId('compte_id')->constrained('comptes')->onDelete('cascade');
             $table->decimal('montant', 15, 2)->default(0);
             $table->string('type')->default('debit');
             $table->timestamps();
-            // la clé étrangère est ajoutée par 2025_10_24_000003_add_foreign_key_to_transactions_table.php
         });
     }
 

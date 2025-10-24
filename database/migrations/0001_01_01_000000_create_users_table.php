@@ -5,6 +5,9 @@ use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
+    // avoid running this migration inside a transaction on managed Postgres (Neon)
+    public $withinTransaction = false;
+
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -15,7 +18,6 @@ return new class extends Migration
             $table->string('telephone')->nullable();
             $table->string('password');
             $table->timestamps();
-            $table->unique(['email'], 'users_email_unique');
         });
     }
 

@@ -9,12 +9,8 @@ return new class extends Migration
 
     public function up(): void
     {
-        // safe / idempotent: drop constraint if exists, then add it
+        // FK now created inline in create_comptes_table — ensure no leftover constraint before exiting
         \Illuminate\Support\Facades\DB::statement(/** @lang sql */ 'ALTER TABLE IF EXISTS comptes DROP CONSTRAINT IF EXISTS comptes_user_id_foreign');
-
-        Schema::table('comptes', function ($table) {
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-        });
     }
 
     public function down(): void

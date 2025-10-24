@@ -27,9 +27,11 @@ class SeedDemoData extends Seeder
                 'updated_at' => now(),
             ];
         }
-        DB::table('users')->insert($users);
+    // insert users idempotently (upsert on email)
+    DB::table('users')->upsert($users, ['email'], ['nom', 'prenom', 'telephone', 'password', 'updated_at']);
 
-        $createdUsers = DB::table('users')->pluck('id')->all();
+    // récupérer les ids des users créés/présents (ceux avec email user{n}@example.com)
+    $createdUsers = DB::table('users')->where('email', 'like', 'user%@example.com')->pluck('id')->all();
 
         // For each user, create 1-3 comptes
         $comptes = [];

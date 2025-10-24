@@ -9,12 +9,8 @@ return new class extends Migration
 
     public function up(): void
     {
-        // ensure constraint not present (idempotent)
+        // FK now created inline in create_transactions_table — ensure no leftover constraint before exiting
         \Illuminate\Support\Facades\DB::statement(/** @lang sql */ 'ALTER TABLE IF EXISTS account_transactions DROP CONSTRAINT IF EXISTS account_transactions_compte_id_foreign');
-
-        Schema::table('account_transactions', function ($table) {
-            $table->foreign('compte_id')->references('id')->on('comptes')->onDelete('cascade');
-        });
     }
 
     public function down(): void
