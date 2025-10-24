@@ -4,10 +4,11 @@ namespace App\Traits;
 
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 trait ApiQueryTrait
 {
-    public function applyQueryFilters(Builder $query, Request $request): Builder
+    public function applyQueryFilters(Builder $query, Request $request): LengthAwarePaginator
     {
         // Filtrage
         if ($type = $request->query('type')) {

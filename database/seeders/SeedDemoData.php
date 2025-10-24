@@ -33,22 +33,37 @@ class SeedDemoData extends Seeder
     // récupérer les ids des users créés/présents (ceux avec email user{n}@example.com)
     $createdUsers = DB::table('users')->where('email', 'like', 'user%@example.com')->pluck('id')->all();
 
-        // For each user, create 1-3 comptes
+        // For each user, create 1-3 comptes (use column names expected by the app)
         $comptes = [];
         foreach ($createdUsers as $userId) {
             $count = rand(1, 3);
             for ($j = 0; $j < $count; $j++) {
                 $numero = 'C' . str_pad((string) rand(100000, 999999), 8, '0', STR_PAD_LEFT);
+                $type = rand(0,1) ? 'epargne' : 'cheque';
                 $comptes[] = [
+                    'numero_compte' => $numero,
+                    'titulaire_compte' => 'Titulaire '.$userId,
+                    // fill both legacy `type` and new `type_compte` to be compatible
+                    'type' => $type,
+                    'type_compte' => $type,
+                    'devise' => 'CFA',
+                    'date_creation' => now()->toDateString(),
+                    'statut_compte' => 'actif',
+                    'motif_blocage' => null,
+                    'version' => 1,
                     'user_id' => $userId,
-                    'type' => rand(0,1) ? 'epargne' : 'cheque',
-                    'solde' => rand(0, 2000000),
+                    'solde' => rand(0, 2000000) / 100,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
             }
         }
-        DB::table('comptes')->insert($comptes);
+        // use upsert for idempotency: match on numero_compte
+        DB::table('comptes')->upsert(
+            $comptes,
+            ['numero_compte'],
+            ['titulaire_compte','type','type_compte','devise','date_creation','statut_compte','motif_blocage','version','user_id','solde','updated_at']
+        );
 
         $createdComptes = DB::table('comptes')->pluck('id')->all();
 

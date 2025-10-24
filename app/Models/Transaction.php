@@ -4,14 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Compte;
 
 class Transaction extends Model
 {
     use HasFactory;
-    public $incrementing = false;
-    protected $keyType = 'string';
+    protected $table = 'account_transactions';
+    // use integer autoincrement id to match the migration
+    protected $keyType = 'int';
+    public $incrementing = true;
     protected $fillable = [
-        'id', 'montant', 'type', 'compte_id'
+        'montant', 'type', 'compte_id'
     ];
 
     public function compte()

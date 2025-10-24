@@ -13,8 +13,9 @@ class Compte extends Model
     use HasFactory;
 
     protected $table = 'comptes';
-    protected $keyType = 'string';
-    public $incrementing = false;
+    // use integer autoincrement id to match the database migration
+    protected $keyType = 'int';
+    public $incrementing = true;
 
     protected $fillable = [
         'numero_compte',
@@ -27,6 +28,14 @@ class Compte extends Model
         'version',
         'user_id',
         'client_id',
+        'solde',
+        'archived',
+    ];
+
+    protected $casts = [
+        'date_creation' => 'date',
+        'archived' => 'boolean',
+        'solde' => 'decimal:2',
     ];
 
     protected static function boot()
@@ -35,12 +44,6 @@ class Compte extends Model
 
         static::addGlobalScope('non_archived', function ($query) {
             $query->where('archived', false);
-        });
-
-        static::creating(function ($model) {
-            if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = (string) Str::uuid();
-            }
         });
     }
 
