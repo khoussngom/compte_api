@@ -17,7 +17,7 @@
           { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["epargne", "cheque"] }, "description": "Filtrer par type de compte" },
           { "name": "statut", "in": "query", "schema": { "type": "string", "enum": ["actif", "bloque", "ferme"] }, "description": "Filtrer par statut" },
           { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Recherche par numéro de compte ou nom du titulaire" },
-          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["dateCreation", "solde", "titulaire"], "default": "dateCreation" }, "description": "Champ de tri" },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["dateCreation", "solde", "titulaire"], "default": "" }, "description": "Champ de tri" },
           { "name": "order", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }, "description": "Ordre de tri" }
         ],
         "responses": {
@@ -76,9 +76,9 @@
                 "solde": 10000,
                 "client": {
                   "id": null,
-                  "titulaire": "Hawa BB Wane",
-                  "nci": "1895200000231",
-                  "email": "cheikh.sy@example.com",
+                  "titulaire": "khouss Ngom",
+                  "nci": "1234567890123",
+                  "email": "cheikh@example.com",
                   "telephone": "+221771234567",
                   "adresse": "Dakar, Sénégal"
                 }

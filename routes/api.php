@@ -25,10 +25,10 @@ Route::get('/comptes', [CompteController::class, 'index']);
 Route::get('/comptes/{numero}', [CompteController::class, 'show']);
 
 // Public account creation endpoint
-Route::post('/accounts', [AccountController::class, 'store']);
+Route::post('/accounts', [AccountController::class, 'store'])->middleware('logging');
 
 // Generic message sending (uses the bound MessageServiceInterface)
-Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'send']);
+Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'send'])->middleware('logging');
 
 // User listing endpoints
 Route::get('/users/clients', [UserController::class, 'clients']);

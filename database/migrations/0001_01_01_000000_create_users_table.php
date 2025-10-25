@@ -5,7 +5,6 @@ use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
-    // avoid running this migration inside a transaction on managed Postgres (Neon)
     public $withinTransaction = false;
 
     public function up(): void
