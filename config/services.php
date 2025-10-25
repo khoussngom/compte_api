@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'twilio' => [
+        // Preferred: set your Account SID and Messaging Service SID separately in .env
+        'account_sid' => env('TWILIO_ACCOUNT_SID', null),
+        'messaging_service_sid' => env('TWILIO_MESSAGING_SID', null),
+        // Backwards-compat: some setups used TWILIO_SID previously (could be MG... or AC...)
+        'sid' => env('TWILIO_SID', null),
+        'token' => env('TWILIO_TOKEN', null),
+        'from' => env('TWILIO_FROM', ''),
+    ],
+
 ];
