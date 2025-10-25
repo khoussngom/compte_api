@@ -16,8 +16,8 @@
           { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 }, "description": "Nombre d'éléments par page" },
           { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["epargne", "cheque"] }, "description": "Filtrer par type de compte" },
           { "name": "statut", "in": "query", "schema": { "type": "string", "enum": ["actif", "bloque", "ferme"] }, "description": "Filtrer par statut" },
-          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Recherche par numéro de compte ou nom du titulaire" },
-          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["dateCreation", "solde", "titulaire"], "default": "dateCreation" }, "description": "Champ de tri" },
+          { "name": "search", "in": "query", "schema": { "type": "string" ,"default": ""}, "description": "Recherche par numéro de compte ou nom du titulaire" },
+          { "name": "sort", "in": "query", "schema": { "type": "string",  "enum": ["dateCreation", "solde", "titulaire"], "default": "" }, "description": "Champ de tri" },
           { "name": "order", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }, "description": "Ordre de tri" }
         ],
         "responses": {
@@ -77,8 +77,8 @@
                 "client": {
                   "id": null,
                   "titulaire": "Hawa BB Wane",
-                  "nci": "1895200000231",
-                  "email": "cheikh.sy@example.com",
+                  "nci": "1234567890123",
+                  "email": "khouss@example.com",
                   "telephone": "+221771234567",
                   "adresse": "Dakar, Sénégal"
                 }
