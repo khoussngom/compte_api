@@ -12,95 +12,20 @@
         "description": "Récupère une liste paginée de comptes avec possibilité de filtrage et tri",
         "tags": ["Comptes"],
         "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "schema": { "type": "integer", "default": 1 },
-            "description": "Numéro de page"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": { "type": "integer", "default": 10 },
-            "description": "Nombre d'éléments par page"
-          },
-          {
-            "name": "type",
-            "in": "query",
-            "schema": { "type": "string", "enum": ["epargne", "cheque"] },
-            "description": "Filtrer par type de compte"
-          },
-          {
-            "name": "statut",
-            "in": "query",
-            "schema": { "type": "string", "enum": ["actif", "bloque", "ferme"] },
-            "description": "Filtrer par statut"
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "schema": { "type": "string" },
-            "description": "Recherche par numéro de compte ou nom du titulaire"
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "schema": { "type": "string", "enum": ["dateCreation", "solde", "titulaire"], "default": "dateCreation" },
-            "description": "Champ de tri"
-          },
-          {
-            "name": "order",
-            "in": "query",
-            "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" },
-            "description": "Ordre de tri"
-          }
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Numéro de page" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 }, "description": "Nombre d'éléments par page" },
+          { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["epargne", "cheque"] }, "description": "Filtrer par type de compte" },
+          { "name": "statut", "in": "query", "schema": { "type": "string", "enum": ["actif", "bloque", "ferme"] }, "description": "Filtrer par statut" },
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Recherche par numéro de compte ou nom du titulaire" },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["dateCreation", "solde", "titulaire"], "default": "dateCreation" }, "description": "Champ de tri" },
+          { "name": "order", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }, "description": "Ordre de tri" }
         ],
         "responses": {
           "200": {
             "description": "Liste des comptes récupérée avec succès",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ComptesResponse"
-                },
-                "examples": {
-                  "default": {
-                    "summary": "Exemple de réponse",
-                    "value": {
-                      "success": true,
-                      "data": [
-                        {
-                          "id": "550e8400-e29b-41d4-a716-446655440000",
-                          "numeroCompte": "C00123456",
-                          "titulaire": "Amadou Diallo",
-                          "type": "epargne",
-                          "solde": 1250000,
-                          "devise": "FCFA",
-                          "dateCreation": "2025-10-24T01:24:10.641Z",
-                          "statut": "actif",
-                          "metadonnees": {
-                            "derniereModification": "2025-10-24T01:24:10.641Z",
-                            "version": 1
-                          }
-                        }
-                      ],
-                      "pagination": {
-                        "currentPage": 0,
-                        "totalPages": 0,
-                        "totalItems": 0,
-                        "itemsPerPage": 0,
-                        "hasNext": true,
-                        "hasPrevious": true
-                      },
-                      "links": {
-                        "self": "string",
-                        "next": "string",
-                        "first": "string",
-                        "last": "string"
-                      }
-                    }
-                  }
-                }
+                "schema": { "$ref": "#/components/schemas/ComptesResponse" }
               }
             }
           }
@@ -110,8 +35,99 @@
     "/api/comptes-demo": {
       "get": {
         "summary": "Endpoint de démonstration public pour la doc",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/accounts": {
+      "post": {
+        "summary": "Créer un compte bancaire avec client",
+        "description": "Crée un utilisateur, un client et un compte bancaire avec validation stricte.",
+        "tags": ["Accounts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type", "soldeInitial", "devise", "solde", "client"],
+                "properties": {
+                  "type": { "type": "string", "enum": ["cheque", "epargne"] },
+                  "soldeInitial": { "type": "number", "minimum": 10000 },
+                  "devise": { "type": "string", "enum": ["FCFA", "XOF"] },
+                  "solde": { "type": "number", "minimum": 0 },
+                  "client": {
+                    "type": "object",
+                    "required": ["titulaire", "nci", "email", "telephone", "adresse"],
+                    "properties": {
+                      "id": { "type": "integer", "nullable": true },
+                      "titulaire": { "type": "string" },
+                      "nci": { "type": "string", "pattern": "^[12][0-9]{12}$" },
+                      "email": { "type": "string", "format": "email" },
+                      "telephone": { "type": "string", "pattern": "^\\+221(77|78|70|76|75)[0-9]{7}$" },
+                      "adresse": { "type": "string" }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "type": "cheque",
+                "soldeInitial": 500000,
+                "devise": "FCFA",
+                "solde": 10000,
+                "client": {
+                  "id": null,
+                  "titulaire": "Hawa BB Wane",
+                  "nci": "1895200000231",
+                  "email": "cheikh.sy@example.com",
+                  "telephone": "+221771234567",
+                  "adresse": "Dakar, Sénégal"
+                }
+              }
+            }
+          }
+        },
         "responses": {
-          "200": { "description": "OK" }
+          "201": {
+            "description": "Compte créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AccountCreationSuccessResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" }
+              }
+            }
+          },
+          "500": { "description": "Erreur serveur" }
+        }
+      }
+    },
+    "/api/users/clients": {
+      "get": {
+        "summary": "Lister les utilisateurs qui sont clients",
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "Liste des clients",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/UserWithClient" } } } } } }
+          }
+        }
+      }
+    },
+    "/api/users/admins": {
+      "get": {
+        "summary": "Lister les utilisateurs qui sont admins",
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "Liste des admins",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/UserWithAdmin" } } } } } }
+          }
         }
       }
     }
@@ -129,13 +145,7 @@
           "devise": { "type": "string" },
           "dateCreation": { "type": "string", "format": "date-time" },
           "statut": { "type": "string", "enum": ["actif", "bloque", "ferme"] },
-          "metadonnees": {
-            "type": "object",
-            "properties": {
-              "derniereModification": { "type": "string", "format": "date-time" },
-              "version": { "type": "integer" }
-            }
-          }
+          "metadonnees": { "type": "object", "properties": { "derniereModification": { "type": "string", "format": "date-time" }, "version": { "type": "integer" } } }
         }
       },
       "Pagination": {
@@ -165,6 +175,75 @@
           "data": { "type": "array", "items": { "$ref": "#/components/schemas/Compte" } },
           "pagination": { "$ref": "#/components/schemas/Pagination" },
           "links": { "$ref": "#/components/schemas/Links" }
+        }
+      },
+      "AccountCreationSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Compte créé avec succès" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "example": "660f9511-f30c-52e5-b827-557766551111" },
+              "numeroCompte": { "type": "string", "example": "C00123460" },
+              "titulaire": { "type": "string", "example": "Cheikh Sy" },
+              "type": { "type": "string", "example": "cheque" },
+              "solde": { "type": "number", "example": 500000 },
+              "devise": { "type": "string", "example": "FCFA" },
+              "dateCreation": { "type": "string", "format": "date-time", "example": "2025-10-19T10:30:00Z" },
+              "statut": { "type": "string", "example": "actif" },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "derniereModification": { "type": "string", "format": "date-time", "example": "2025-10-19T10:30:00Z" },
+                  "version": { "type": "integer", "example": 1 }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string", "example": "VALIDATION_ERROR" },
+              "message": { "type": "string", "example": "Les données fournies sont invalides" },
+              "details": {
+                "type": "object",
+                "additionalProperties": { "type": "string" },
+                "example": {
+                  "soldeInitial": "Le solde initial doit être supérieur ou égal à 10000"
+                }
+              }
+            }
+          }
+        }
+      },
+      "UserWithClient": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "nom": { "type": "string" },
+          "prenom": { "type": "string" },
+          "email": { "type": "string" },
+          "telephone": { "type": "string" },
+          "client": { "type": "object" }
+        }
+      },
+      "UserWithAdmin": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "nom": { "type": "string" },
+          "prenom": { "type": "string" },
+          "email": { "type": "string" },
+          "telephone": { "type": "string" },
+          "admin": { "type": "object" }
         }
       }
     }

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Models\Client;
 use App\Models\Transaction;
-use Illuminate\Support\Str;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -28,6 +28,8 @@ class Compte extends Model
         'version',
         'user_id',
         'client_id',
+        'manager_id',
+        'is_admin_managed',
         'solde',
         'archived',
     ];
@@ -44,6 +46,13 @@ class Compte extends Model
 
         static::addGlobalScope('non_archived', function ($query) {
             $query->where('archived', false);
+        });
+
+        // Generate a unique numero_compte when creating
+        static::creating(function ($compte) {
+            if (empty($compte->numero_compte)) {
+                $compte->numero_compte = static::generateNumero();
+            }
         });
     }
 
@@ -71,12 +80,22 @@ class Compte extends Model
         return $this->belongsTo(Client::class, 'client_id');
     }
 
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
     public function getSoldeAttribute()
     {
-        $depot = $this->transactions()->where('type', 'depot')->sum('montant');
-        $retrait = $this->transactions()->where('type', 'retrait')->sum('montant');
+        // If there are transactions, calculate from them
+        if ($this->transactions()->exists()) {
+            $depot = $this->transactions()->where('type', 'depot')->sum('montant');
+            $retrait = $this->transactions()->where('type', 'retrait')->sum('montant');
+            return $depot - $retrait;
+        }
 
-        return $depot - $retrait;
+        // Otherwise return the stored solde value
+        return $this->attributes['solde'] ?? 0;
     }
 
     public function scopeEtat($query, $statut)
@@ -87,5 +106,18 @@ class Compte extends Model
     public function scopeType($query, $type)
     {
         return $query->where('type_compte', $type);
+    }
+
+    /**
+     * Generate a reasonably unique account number.
+     * Format: ACC-YYYYMMDD-XXXX where XXXX is a random 4-digit number.
+     */
+    public static function generateNumero(): string
+    {
+        do {
+            $numero = 'ACC-'.now()->format('Ymd').'-'.mt_rand(1000, 9999);
+        } while (static::where('numero_compte', $numero)->exists());
+
+        return $numero;
     }
 }

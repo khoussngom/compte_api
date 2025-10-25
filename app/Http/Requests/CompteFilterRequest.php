@@ -14,8 +14,9 @@ class CompteFilterRequest extends FormRequest
     public function rules()
     {
         return [
-            'type' => 'nullable|string|in:épargne,courant,professionnel',
-            'statut' => 'nullable|string|in:actif,inactif,bloqué',
+            // accept both accented and ASCII variants (e.g. épargne and epargne)
+            'type' => 'nullable|string|in:épargne,epargne,courant,professionnel',
+            'statut' => 'nullable|string|in:actif,inactif,bloque,bloqué',
             'search' => 'nullable|string|max:100',
             'sort' => 'nullable|string|in:date_creation,solde,titulaire_compte',
             'order' => 'nullable|string|in:asc,desc',
