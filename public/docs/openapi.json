@@ -6,10 +6,9 @@
         "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
     },
     "servers": [
+        { "url": "http://localhost:8000", "description": "Local development (use /api/v1 paths)" },
         { "url": "https://compte-api-hjvy.onrender.com/khouss.ngom", "description": "Hosted docs (Render) — production prefix /khouss.ngom (khouss.ngom)" },
-        { "url": "/", "description": "Use same origin as Swagger UI (recommended for hosted docs)" },
-        { "url": "http://localhost:8000/khouss.ngom", "description": "Local dev (use /khouss.ngom prefix). For HTTPS testing use a tunnel (ngrok) and replace the server URL with your ngrok HTTPS URL." },
-        { "url": "https://{ngrokDomain}", "description": "HTTPS tunnel to local (replace {ngrokDomain} with your ngrok domain, e.g. abcd-1234.ngrok.io/khouss.ngom)", "variables": { "ngrokDomain": { "default": "your-ngrok-domain.example" } } }
+        { "url": "/", "description": "Use same origin as Swagger UI (recommended for hosted docs)" }
     ],
     "paths": {
         "/api/v1/comptes/{id}/archive": {
@@ -206,7 +205,62 @@
                 }
             }
             ,
-            "/api/v1/comptes/{compte}/bloquer": {
+            "/api/v1/comptes/{identifiant}": {
+                "patch": {
+                    "summary": "Mettre à jour un compte (par id ou numero)",
+                    "tags": ["Comptes"],
+                    "description": "Met à jour les informations d'un compte et du client associé. Tous les champs sont optionnels mais au moins un doit être fourni. Aucune authentification requise.",
+                    "parameters": [
+                        { "name": "identifiant", "in": "path", "required": true, "schema": { "type": "string" }, "description": "ID (UUID) ou numéro du compte (numero_compte)" }
+                    ],
+                    "requestBody": {
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "titulaire": { "type": "string", "description": "Nom du titulaire" },
+                                        "informationsClient": {
+                                            "type": "object",
+                                            "properties": {
+                                                "telephone": { "type": "string", "pattern": "^\\+221(77|78|70|76|75)[0-9]{7}$", "description": "Numéro Sénégalais (unique)" },
+                                                "email": { "type": "string", "format": "email", "description": "Email du client (unique)" },
+                                                "password": { "type": "string", "description": "Mot de passe en clair (sera hashé avant sauvegarde)" },
+                                                "nci": { "type": "string", "pattern": "^[12][0-9]{12}$", "description": "NCI valide" }
+                                            }
+                                        }
+                                    },
+                                    "example": {
+                                        "titulaire": "Amadou Diallo Junior",
+                                        "informationsClient": {
+                                            "telephone": "+221771234568",
+                                            "email": "amadou.jr@example.com",
+                                            "password": "nouveauMdp123",
+                                            "nci": "1234567890123"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "201": {
+                            "description": "Compte mis à jour avec succès",
+                            "content": {
+                                "application/json": {
+                                    "schema": { "$ref": "#/components/schemas/AccountUpdateSuccessResponse" }
+                                }
+                            }
+                        },
+                        "400": { "description": "Données invalides ou aucune donnée fournie" },
+                        "404": { "description": "Compte introuvable" },
+                        "422": { "description": "Erreur de validation (par ex. email/telephone déjà utilisé)" }
+                    }
+                }
+            }
+                ,
+                "/api/v1/comptes/{compte}/bloquer": {
                 "post": {
                     "summary": "Bloquer un compte (enregistrer période et motif)",
                     "tags": ["Comptes"],
@@ -342,6 +396,14 @@
                     }
                     }
                 }
+                }
+            },
+            "AccountUpdateSuccessResponse": {
+                "type": "object",
+                "properties": {
+                "success": { "type": "boolean", "example": true },
+                "message": { "type": "string", "example": "Compte mis à jour avec succès" },
+                "data": { "$ref": "#/components/schemas/Compte" }
                 }
             },
             "ValidationErrorResponse": {

@@ -29,6 +29,9 @@ Route::middleware('cors')->group(function () {
 
     // Public read-only endpoints
     Route::get('comptes', [CompteController::class, 'index']);
+    // Patch to update compte by id or numero (fields optional, at least one required)
+    Route::patch('comptes/{identifiant}', [CompteController::class, 'update'])->middleware('logging');
+
     Route::get('comptes/{numero}', [CompteController::class, 'show']);
 
     // Public account creation endpoint

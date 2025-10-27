@@ -7,6 +7,7 @@ use App\Services\TwilioMessageService;
 use Illuminate\Support\ServiceProvider;
 use App\Services\MessageServiceInterface;
 use Twilio\Rest\Client;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as FrameworkVerifyCsrf;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -62,6 +63,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Ensure our application-level VerifyCsrfToken middleware (App\Http\Middleware\VerifyCsrfToken)
+        // is used in place of the framework class when resolving middleware from the container.
+        // This allows our diagnostic logging and local exemptions to run even when the
+        // framework references the middleware by the framework FQCN.
+        $this->app->bind(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class, \App\Http\Middleware\VerifyCsrfToken::class);
+
+        // In local environment, also add explicit exclusions to the framework middleware
+        // so that requests matching our local API mount do not trigger CSRF checks.
+        if (app()->environment('local')) {
+            FrameworkVerifyCsrf::except([
+                'khouss.ngom/api/v1/*',
+                'khouss.ngom/api/v1',
+                'api/v1/*',
+            ]);
+        }
     }
 }

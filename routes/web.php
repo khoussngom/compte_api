@@ -2,10 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Mount the API v1 routes for local testing under /khouss.ngom/api/v1/...
-Route::prefix('khouss.ngom/api/v1')->group(function () {
-    require __DIR__ . '/v1_routes.php';
-});
+// NOTE: v1 API routes are mounted in routes/api.php so they use the `api` middleware
+// (stateless, no CSRF). We used to include them here for a custom local prefix but
+// serving API routes from `routes/api.php` is the recommended approach.
 
 
 Route::get('/', function () {

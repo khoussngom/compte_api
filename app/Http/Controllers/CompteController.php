@@ -8,12 +8,14 @@ use App\Traits\ApiQueryTrait;
 use Illuminate\Support\Carbon;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CompteFilterRequest;
 use App\Http\Requests\BlocageCompteRequest;
 use App\Services\CompteLookupService;
 use App\Http\Resources\CompteResource;
 use App\Exceptions\CompteNotFoundException;
+use App\Http\Requests\UpdateCompteRequest;
 
 class CompteController extends Controller
 {
@@ -162,5 +164,78 @@ class CompteController extends Controller
 
         $resource = new CompteResource($compte);
         return $this->successResponse($resource->toArray(request()), 'Détail du compte récupéré');
+    }
+
+    /**
+     * Mettre à jour un compte (par id ou numero_compte). Tous les champs sont optionnels,
+     * mais au moins un doit être fourni.
+     */
+    public function update(UpdateCompteRequest $request, $identifiant)
+    {
+        // resolve compte by id or numero
+        $compte = Compte::find($identifiant);
+        if (!$compte) {
+            $compte = Compte::where('numero_compte', $identifiant)->first();
+        }
+
+        if (!$compte) {
+            return $this->notFoundResponse('Compte introuvable');
+        }
+
+        $data = $request->validated();
+
+        if (array_key_exists('titulaire', $data)) {
+            // only set if the database actually has this column (some migrations differ by deployment)
+            if (Schema::hasColumn('comptes', 'titulaire')) {
+                $compte->titulaire = $data['titulaire'];
+            } else {
+                Log::warning('Attempt to set titulaire but comptes.titulaire column missing', ['compte_id' => $compte->id]);
+            }
+        }
+
+        if (array_key_exists('informationsClient', $data)) {
+            $clientData = $data['informationsClient'];
+
+            // update the associated user (primary contact info) when present
+            $user = $compte->user;
+            if ($user) {
+                if (!empty($clientData['telephone'])) {
+                    $user->telephone = $clientData['telephone'];
+                }
+                if (!empty($clientData['email'])) {
+                    $user->email = $clientData['email'];
+                }
+                if (!empty($clientData['password'])) {
+                    $user->password = bcrypt($clientData['password']);
+                }
+                $user->save();
+            }
+
+            // If a separate Client record exists (some deployments have a clients table), update its fields too
+            if ($compte->client) {
+                $client = $compte->client;
+                if (!empty($clientData['telephone'])) {
+                    $client->telephone = $clientData['telephone'];
+                }
+                if (!empty($clientData['email'])) {
+                    $client->email = $clientData['email'];
+                }
+                if (!empty($clientData['password'])) {
+                    $client->password = bcrypt($clientData['password']);
+                }
+                if (!empty($clientData['nci'])) {
+                    $client->nci = $clientData['nci'];
+                }
+                $client->save();
+            }
+        }
+
+        $compte->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Compte mis à jour avec succès',
+            'data' => new CompteResource($compte->fresh('client'))
+        ], 201);
     }
 }

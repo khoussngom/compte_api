@@ -86,6 +86,14 @@ class Compte extends Model
         return $this->belongsTo(Client::class, 'client_id');
     }
 
+    /**
+     * The primary user owning this compte (user_id FK).
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function manager()
     {
         return $this->belongsTo(User::class, 'manager_id');
