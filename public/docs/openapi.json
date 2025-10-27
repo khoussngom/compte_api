@@ -6,8 +6,10 @@
         "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
     },
     "servers": [
-        { "url": "http://localhost:8000/khouss.ngom", "description": "Local dev (use /khouss.ngom prefix)" },
-        { "url": "https://khouss.ngom", "description": "Production API host (khouss.ngom)" }
+           { "url": "/", "description": "Use same origin as Swagger UI (recommended for hosted docs)" },
+    { "url": "https://compte-api-hjvy.onrender.com/khouss.ngom", "description": "Hosted docs (Render) — production prefix /khouss.ngom (khouss.ngom)" },
+           { "url": "http://localhost:8000/khouss.ngom", "description": "Local dev (use /khouss.ngom prefix). For HTTPS testing use a tunnel (ngrok) and replace the server URL with your ngrok HTTPS URL." },
+           { "url": "https://{ngrokDomain}", "description": "HTTPS tunnel to local (replace {ngrokDomain} with your ngrok domain, e.g. abcd-1234.ngrok.io/khouss.ngom)", "variables": { "ngrokDomain": { "default": "your-ngrok-domain.example" } } }
     ],
     "paths": {
         "/api/v1/comptes/{id}/archive": {
@@ -15,7 +17,7 @@
                 "summary": "Archiver un compte (marquer comme archived)",
                 "tags": ["Comptes"],
                 "parameters": [
-                    { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" }, "description": "ID du compte à archiver" }
+                    { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "ID numérique du compte à archiver" }
                 ],
                 "responses": {
                     "200": {
@@ -42,7 +44,7 @@
                     { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["epargne", "cheque"] }, "description": "Filtrer par type de compte" },
                     { "name": "statut", "in": "query", "schema": { "type": "string", "enum": ["actif", "bloque", "ferme"] }, "description": "Filtrer par statut" },
                     { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Recherche par numéro de compte ou nom du titulaire" },
-                    { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["dateCreation", "solde", "titulaire"], "default": "" }, "description": "Champ de tri" },
+                    { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["date_creation", "solde", "titulaire_compte"], "default": "date_creation" }, "description": "Champ de tri (utilisez les clés exactes: date_creation, solde, titulaire_compte)" },
                     { "name": "order", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }, "description": "Ordre de tri" }
                 ],
                 "responses": {
