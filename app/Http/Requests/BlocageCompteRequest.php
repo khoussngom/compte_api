@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Traits\ApiResponseTrait;
 use App\Traits\Validators\ValidationTrait;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class BlocageCompteRequest extends FormRequest
 {
-    use ValidationTrait;
+    use ValidationTrait, ApiResponseTrait;
     public function authorize()
     {
         return true;
@@ -16,7 +17,6 @@ class BlocageCompteRequest extends FormRequest
 
     public function rules()
     {
-        // handled in passedValidation via ValidationTrait
         return [];
     }
 
@@ -34,7 +34,7 @@ class BlocageCompteRequest extends FormRequest
     {
         $errors = $this->validateBlocageComptePayload($this->all());
         if (!empty($errors)) {
-            throw new HttpResponseException(response()->json(['success' => false, 'errors' => $errors], 400));
+            throw new HttpResponseException($this->validationErrorResponse($errors, 'Validation du blocage invalide', 400));
         }
     }
 }

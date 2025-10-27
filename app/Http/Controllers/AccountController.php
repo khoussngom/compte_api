@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Traits\Validators\ValidationTrait;
@@ -10,19 +11,20 @@ use App\Traits\Validators\ValidationTrait;
 class AccountController extends Controller
 {
     use ValidationTrait;
+    use ApiResponseTrait;
 
     public function store(Request $request)
     {
         $payload = $request->all();
         $errors = $this->validateAccountStorePayload($payload);
         if (!empty($errors)) {
-            return response()->json(['success' => false, 'error' => ['code' => 'VALIDATION_ERROR','message' => 'Les données fournies sont invalides','details' => $errors]], 400);
+            return $this->errorResponse(['code' => 'VALIDATION_ERROR', 'details' => $errors], 400);
         }
 
         try {
-            // Extract client data
+
             $clientData = $payload['client'];
-            // Split titulaire into nom prenom, assume "Prenom Nom"
+
             $parts = explode(' ', $clientData['titulaire'], 2);
             $prenom = $parts[0] ?? '';
             $nom = $parts[1] ?? $prenom;
@@ -33,13 +35,13 @@ class AccountController extends Controller
                 'email' => $clientData['email'],
                 'telephone' => $clientData['telephone'],
                 'adresse' => $clientData['adresse'],
-                'date_naissance' => null, // not provided
+                'date_naissance' => null,
                 'nci' => $clientData['nci'],
             ];
 
             $compteData = [
                 'type_compte' => $payload['type'],
-                'solde' => $payload['soldeInitial'], // use soldeInitial as initial solde
+                'solde' => $payload['soldeInitial'],
                 'devise' => $payload['devise'],
                 'statut_compte' => 'actif',
                 'date_creation' => now(),
@@ -47,37 +49,16 @@ class AccountController extends Controller
 
             $user = User::createAccount($userData, $compteData);
 
-            $compte = $user->client->comptes()->first(); // assume one compte
+            $compte = $user->client->comptes()->first();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Compte créé avec succès',
-                'data' => [
-                    'id' => (string) $compte->id,
-                    'numeroCompte' => $compte->numero_compte,
-                    'titulaire' => $clientData['titulaire'],
-                    'type' => $compte->type_compte,
-                    'solde' => $compte->solde,
-                    'devise' => $compte->devise,
-                    'dateCreation' => $compte->created_at->toIso8601String(),
-                    'statut' => $compte->statut_compte,
-                    'metadata' => [
-                        'derniereModification' => $compte->updated_at->toIso8601String(),
-                        'version' => $compte->version ?? 1,
-                    ],
-                ]
-            ], 201);
+            return $this->respondWithCompteModel($compte, $clientData['titulaire'], 'Compte créé avec succès', 201);
         } catch (\Throwable $e) {
             Log::error('Account creation failed: ' . $e->getMessage(), ['exception' => $e]);
 
-            return response()->json([
-                'success' => false,
-                'error' => [
-                    'code' => 'VALIDATION_ERROR',
-                    'message' => 'Les données fournies sont invalides',
-                    'details' => ['general' => $e->getMessage()],
-                ],
-            ], 400);
+            return $this->errorResponse('Les données fournies sont invalides', 400, [
+                'code' => 'VALIDATION_ERROR',
+                'details' => ['general' => $e->getMessage()],
+            ]);
         }
     }
 }

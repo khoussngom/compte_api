@@ -48,21 +48,18 @@ class VerifyCsrfToken extends BaseVerifier
     {
         $path = $request->path();
 
-        // Compute whether any pattern matches (use the Request::is helper semantics)
         $matched = false;
         foreach ($this->except as $except) {
             if (empty($except)) {
                 continue;
             }
 
-            // Request::is accepts patterns like 'api/*'
             if ($request->is($except) || trim($except, '/') === $path) {
                 $matched = true;
                 break;
             }
         }
 
-        // Log for local diagnostics only
         if (app()->environment('local')) {
             Log::info('CSRF check', [
                 'path' => $path,

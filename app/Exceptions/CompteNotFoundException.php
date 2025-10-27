@@ -2,19 +2,14 @@
 namespace App\Exceptions;
 
 use Exception;
+use App\Traits\ApiResponseTrait;
 
-class CompteNotFoundException extends Exception
-{
-}
-<?php
-
-namespace App\Exceptions;
-
-use Exception;
 use Illuminate\Http\JsonResponse;
 
 class CompteNotFoundException extends Exception
 {
+    use ApiResponseTrait;
+
     public function __construct($numeroCompte)
     {
         parent::__construct("Le compte {$numeroCompte} est introuvable");
@@ -22,12 +17,6 @@ class CompteNotFoundException extends Exception
 
     public function render(): JsonResponse
     {
-        return response()->json([
-            'success' => false,
-            'error' => [
-                'code' => 'COMPTE_NOT_FOUND',
-                'message' => $this->getMessage(),
-            ],
-        ], 404);
+        return $this->errorResponse($this->getMessage(), 404, ['code' => 'COMPTE_NOT_FOUND']);
     }
 }

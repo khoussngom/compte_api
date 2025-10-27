@@ -14,17 +14,15 @@ use App\Http\Controllers\AccountController;
 Route::middleware('cors')->group(function () {
     // Demo endpoint
     Route::get('comptes-demo', function () {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                [
-                    'id' => 1,
-                    'numero' => 'CPT-0001',
-                    'solde' => '1000.00',
-                    'type' => 'courant'
-                ]
+        // Use AccountController's ApiResponseTrait via an instance to keep response formatting centralized
+        return (new AccountController())->successResponse([
+            [
+                'id' => 1,
+                'numero' => 'CPT-0001',
+                'solde' => '1000.00',
+                'type' => 'courant'
             ]
-        ]);
+        ], 'Demo comptes');
     });
 
     // Public read-only endpoints

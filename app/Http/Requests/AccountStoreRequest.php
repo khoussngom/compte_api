@@ -5,10 +5,11 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Traits\Validators\ValidationTrait;
+use App\Traits\ApiResponseTrait;
 
 class AccountStoreRequest extends FormRequest
 {
-    use ValidationTrait;
+    use ValidationTrait, ApiResponseTrait;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -52,7 +53,7 @@ class AccountStoreRequest extends FormRequest
     {
         $errors = $this->validateAccountStorePayload($this->all());
         if (!empty($errors)) {
-            throw new HttpResponseException(response()->json(['success' => false, 'errors' => $errors], 400));
+            throw new HttpResponseException($this->validationErrorResponse($errors, 'Validation du compte invalide', 400));
         }
     }
 }

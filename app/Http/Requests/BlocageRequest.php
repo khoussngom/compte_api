@@ -3,12 +3,13 @@
 namespace App\Http\Requests;
 
 use App\Traits\Validators\ValidationTrait;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class BlocageRequest extends FormRequest
 {
-    use ValidationTrait;
+    use ValidationTrait, ApiResponseTrait;
     public function authorize()
     {
         return true;
@@ -33,7 +34,7 @@ class BlocageRequest extends FormRequest
     {
         $errors = $this->validateBlocagePayload($this->all());
         if (!empty($errors)) {
-            throw new HttpResponseException(response()->json(['success' => false, 'errors' => $errors], 400));
+            throw new HttpResponseException($this->validationErrorResponse($errors, 'Payload invalide', 400));
         }
     }
 }

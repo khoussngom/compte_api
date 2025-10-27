@@ -8,16 +8,16 @@ use App\Traits\ApiQueryTrait;
 use Illuminate\Support\Carbon;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CompteFilterRequest;
-use App\Http\Requests\BlocageCompteRequest;
 use App\Http\Requests\BlocageRequest;
-use App\Http\Requests\DeblocageRequest;
 use App\Services\CompteLookupService;
 use App\Http\Resources\CompteResource;
-use App\Exceptions\CompteNotFoundException;
+use Illuminate\Support\Facades\Schema;
+use App\Http\Requests\DeblocageRequest;
+use App\Http\Requests\CompteFilterRequest;
 use App\Http\Requests\UpdateCompteRequest;
+use App\Exceptions\CompteNotFoundException;
+use App\Http\Requests\BlocageCompteRequest;
 
 class CompteController extends Controller
 {
@@ -65,8 +65,8 @@ class CompteController extends Controller
         if (!$telephone) {
             return $this->errorResponse('Téléphone utilisateur manquant', 400);
         }
-        $comptes = Compte::client($telephone)->get();
-        return $this->successResponse($comptes, 'Comptes du client récupérés');
+    $comptes = Compte::client($telephone)->get();
+    return $this->respondWithCollection($comptes, 'Comptes du client récupérés');
     }
 
     /**
@@ -84,7 +84,7 @@ class CompteController extends Controller
         if (!$compte) {
             return $this->notFoundResponse('Compte introuvable');
         }
-        return $this->successResponse($compte, 'Détail du compte récupéré');
+    return $this->respondWithResource($compte, 'Détail du compte récupéré');
     }
 
     /**
@@ -104,7 +104,7 @@ class CompteController extends Controller
         }
         $compte->archived = true;
         $compte->save();
-        return $this->successResponse($compte, 'Compte archivé avec succès');
+    return $this->respondWithResource($compte, 'Compte archivé avec succès');
     }
 
     /**
@@ -145,7 +145,7 @@ class CompteController extends Controller
 
         $compte->save();
 
-        return $this->successResponse($compte, 'Données de blocage enregistrées');
+    return $this->respondWithResource($compte, 'Données de blocage enregistrées');
     }
 
 
@@ -199,7 +199,7 @@ class CompteController extends Controller
             return $this->errorResponse($e->getMessage(), 400);
         }
 
-        return $this->successResponse(new CompteResource($compte), 'Compte bloqué avec succès');
+    return $this->respondWithResource(new CompteResource($compte), 'Compte bloqué avec succès');
     }
 
     /**
@@ -242,7 +242,7 @@ class CompteController extends Controller
             return $this->errorResponse($e->getMessage(), 400);
         }
 
-        return $this->successResponse(new CompteResource($compte), 'Compte débloqué avec succès');
+    return $this->respondWithResource(new CompteResource($compte), 'Compte débloqué avec succès');
     }
 
     /**
@@ -257,7 +257,7 @@ class CompteController extends Controller
         }
 
         $resource = new CompteResource($compte);
-        return $this->successResponse($resource->toArray(request()), 'Détail du compte récupéré');
+    return $this->respondWithResource($resource, 'Détail du compte récupéré');
     }
 
     /**
@@ -290,7 +290,6 @@ class CompteController extends Controller
         if (array_key_exists('informationsClient', $data)) {
             $clientData = $data['informationsClient'];
 
-            // update the associated user (primary contact info) when present
             $user = $compte->user;
             if ($user) {
                 if (!empty($clientData['telephone'])) {
@@ -305,7 +304,6 @@ class CompteController extends Controller
                 $user->save();
             }
 
-            // If a separate Client record exists (some deployments have a clients table), update its fields too
             if ($compte->client) {
                 $client = $compte->client;
                 if (!empty($clientData['telephone'])) {
@@ -326,11 +324,7 @@ class CompteController extends Controller
 
         $compte->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Compte mis à jour avec succès',
-            'data' => new CompteResource($compte->fresh('client'))
-        ], 201);
+    return $this->respondWithResource(new CompteResource($compte->fresh('client')), 'Compte mis à jour avec succès', 201);
     }
 
     /**
@@ -347,28 +341,22 @@ class CompteController extends Controller
             return $this->notFoundResponse('Compte introuvable');
         }
 
-        // Update status and closure date
         $compte->statut_compte = 'ferme';
         $compte->date_fermeture = now();
         $compte->save();
 
-        // Soft delete (requires SoftDeletes trait and deleted_at column)
         try {
             $compte->delete();
         } catch (\Throwable $e) {
-            // If delete fails, still return success for the status update; log the error
+
             Log::warning('Soft delete failed for compte', ['id' => $compte->id, 'error' => $e->getMessage()]);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Compte supprimé avec succès',
-            'data' => [
-                'id' => $compte->id,
-                'numeroCompte' => $compte->numero_compte,
-                'statut' => 'ferme',
-                'dateFermeture' => optional($compte->date_fermeture)->toIso8601String(),
-            ]
-        ], 200);
+        return $this->respondWithData([
+            'id' => $compte->id,
+            'numeroCompte' => $compte->numero_compte,
+            'statut' => 'ferme',
+            'dateFermeture' => optional($compte->date_fermeture)->toIso8601String(),
+        ], 'Compte supprimé avec succès', 200);
     }
 }

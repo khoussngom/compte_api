@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Http\JsonResponse;
+use App\Traits\ApiResponseTrait;
 
 class HealthController extends Controller
 {
+    use ApiResponseTrait;
     public function index(Request $request): JsonResponse
     {
         $result = [
@@ -19,7 +21,6 @@ class HealthController extends Controller
             'checks' => [],
         ];
 
-        // Add non-sensitive env sanity checks to help remote debugging
         $envChecks = [];
         $dbHost = env('DB_HOST');
         $dbPort = env('DB_PORT');
@@ -31,7 +32,6 @@ class HealthController extends Controller
         $envChecks['db_database_present'] = !empty($dbName);
         $envChecks['database_url_present'] = !empty($dbUrl);
 
-        // detect obviously malformed values that have been seen in deployments
     $suspect = false;
     $suspectPatterns = ['client_encoding=', 'dbname=', '${DB_PORT}'];
         foreach ($suspectPatterns as $p) {
@@ -49,8 +49,6 @@ class HealthController extends Controller
 
         $result['checks']['env_sanity'] = $envChecks;
 
-        // Also include non-sensitive view of the effective DB config (from config()),
-        // which helps detect cached/malformed values created at build time.
         try {
             $dbConfig = config('database.connections.pgsql', []);
             $safeDbConfig = [
@@ -66,7 +64,6 @@ class HealthController extends Controller
             $result['checks']['config_database_error'] = $e->getMessage();
         }
 
-        // DB connection
         try {
             DB::connection()->getPdo();
             $result['checks']['db_connection'] = true;
@@ -76,14 +73,13 @@ class HealthController extends Controller
             Log::error('Health check DB connection failed: '.$e->getMessage());
         }
 
-        // check important tables
         $tables = ['users', 'comptes', 'account_transactions'];
         foreach ($tables as $t) {
             try {
                 $exists = Schema::hasTable($t);
                 $result['checks']["table_{$t}"] = $exists;
                 if ($exists) {
-                    // try a small count to ensure permissions
+
                     try {
                         $count = DB::table($t)->limit(1)->count();
                         $result['checks']["table_{$t}_count_sample"] = $count;
@@ -101,6 +97,10 @@ class HealthController extends Controller
 
         $result['ok'] = ($result['checks']['db_connection'] ?? false) === true;
 
-        return response()->json($result, $result['ok'] ? 200 : 500);
+        if ($result['ok']) {
+            return $this->respondWithData($result, 'Health check OK', 200);
+        }
+
+        return $this->errorResponse('Health check failed', 500, $result);
     }
 }

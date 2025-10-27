@@ -18,7 +18,6 @@ class LoggingMiddleware
     {
         $response = $next($request);
 
-        // Logger uniquement les opérations de création (POST)
         if ($request->isMethod('post')) {
             $this->logCreationOperation($request, $response);
         }
@@ -78,7 +77,6 @@ class LoggingMiddleware
             return 'Création de transaction';
         }
 
-        // Opération générique pour les autres créations
         return 'Création de ressource';
     }
 

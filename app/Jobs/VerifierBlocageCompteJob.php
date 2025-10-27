@@ -1,53 +1,4 @@
 <?php
-namespace App\Jobs;
-
-use App\Models\Compte;
-use App\Traits\BlocageTrait;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
-
-class VerifierBlocageCompteJob implements ShouldQueue
-{
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BlocageTrait;
-
-    /**
-     * Execute the job.
-     * Archive comptes that have been blocked and whose block ended long ago.
-     */
-    public function handle()
-    {
-        // Consider accounts whose block ended more than 365 days ago as candidates for archival.
-        $threshold = now()->subDays(365);
-
-        $comptes = Compte::where('statut_compte', 'bloque')
-            ->whereNotNull('date_fin_blocage')
-            ->where('date_fin_blocage', '<=', $threshold)
-            ->get();
-
-        foreach ($comptes as $compte) {
-            try {
-                $compte->statut_compte = 'ferme';
-                $compte->date_fermeture = now();
-                $compte->archived = true;
-                $compte->save();
-
-                // Soft delete if model uses SoftDeletes
-                if (method_exists($compte, 'delete')) {
-                    $compte->delete();
-                }
-
-                Log::channel('comptes')->info('Compte archivé après blocage prolongé', ['compte_id' => $compte->id]);
-            } catch (\Exception $e) {
-                Log::channel('comptes')->error('Erreur lors de l\'archivage du compte bloqué', ['compte_id' => $compte->id, 'error' => $e->getMessage()]);
-            }
-        }
-    }
-}
-<?php
 
 namespace App\Jobs;
 
@@ -63,7 +14,45 @@ class VerifierBlocageCompteJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /**
+     * Handle the job.
+     * - Archive comptes bloqués dont le blocage est terminé depuis longtemps.
+     * - Bloque automatiquement les comptes dont la date de début de blocage est atteinte.
+     */
     public function handle()
+    {
+        $this->archiverComptesBloques();
+        $this->bloquerComptesAutomatiquement();
+    }
+
+    protected function archiverComptesBloques()
+    {
+        $threshold = now()->subDays(365);
+
+        $comptes = Compte::where('statut_compte', 'bloqué')
+            ->whereNotNull('date_fin_blocage')
+            ->where('date_fin_blocage', '<=', $threshold)
+            ->get();
+
+        foreach ($comptes as $compte) {
+            try {
+                $compte->statut_compte = 'ferme';
+                $compte->date_fermeture = now();
+                $compte->archived = true;
+                $compte->save();
+
+                if (method_exists($compte, 'delete')) {
+                    $compte->delete();
+                }
+
+                Log::channel('comptes')->info('Compte archivé après blocage prolongé', ['compte_id' => $compte->id]);
+            } catch (\Exception $e) {
+                Log::channel('comptes')->error("Erreur lors de l'archivage du compte bloqué", ['compte_id' => $compte->id, 'error' => $e->getMessage()]);
+            }
+        }
+    }
+
+    protected function bloquerComptesAutomatiquement()
     {
         $today = now()->startOfDay();
 
@@ -80,9 +69,9 @@ class VerifierBlocageCompteJob implements ShouldQueue
 
                 $compte->transactions()->update(['archived' => true]);
 
-                Log::info('Compte bloqué automatiquement', ['compte_id' => $compte->id]);
+                Log::channel('comptes')->info('Compte bloqué automatiquement', ['compte_id' => $compte->id]);
             } catch (\Exception $e) {
-                Log::error('Erreur lors du blocage automatique du compte', ['compte_id' => $compte->id, 'error' => $e->getMessage()]);
+                Log::channel('comptes')->error('Erreur lors du blocage automatique du compte', ['compte_id' => $compte->id, 'error' => $e->getMessage()]);
             }
         }
     }

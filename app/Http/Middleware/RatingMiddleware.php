@@ -5,9 +5,11 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use App\Traits\ApiResponseTrait;
 
 class RatingMiddleware
 {
+    use ApiResponseTrait;
     /**
      * Limite le nombre de requêtes par utilisateur (exemple: 100 requêtes/heure).
      */
@@ -20,10 +22,7 @@ class RatingMiddleware
 
         $attempts = Cache::get($key, 0);
         if ($attempts >= $maxAttempts) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Trop de requêtes, veuillez patienter.'
-            ], 429);
+            return $this->errorResponse('Trop de requêtes, veuillez patienter.', 429);
         }
         Cache::put($key, $attempts + 1, now()->addMinutes($decayMinutes));
         return $next($request);

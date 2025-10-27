@@ -6,10 +6,12 @@ use App\Services\MessageServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use App\Traits\Validators\ValidationTrait;
+use App\Traits\ApiResponseTrait;
 
 class MessageController extends Controller
 {
     use ValidationTrait;
+    use ApiResponseTrait;
     private MessageServiceInterface $messageService;
 
     public function __construct(MessageServiceInterface $messageService)
@@ -25,11 +27,15 @@ class MessageController extends Controller
         $data = $request->all();
         $errors = $this->validateMessagePayload($data);
         if (!empty($errors)) {
-            return response()->json(['success' => false, 'errors' => $errors], 400);
+            return $this->errorResponse($errors, 400);
         }
 
         $ok = $this->messageService->sendMessage($data['to'], $data['message']);
 
-        return response()->json(['success' => $ok], $ok ? 200 : 500);
+        if (! $ok) {
+            return $this->errorResponse('Envoi du message échoué', 500);
+        }
+
+        return $this->respondWithData(['sent' => true], 'Message envoyé');
     }
 }

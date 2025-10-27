@@ -5,10 +5,11 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Traits\Validators\ValidationTrait;
+use App\Traits\ApiResponseTrait;
 
 class CompteFilterRequest extends FormRequest
 {
-    use ValidationTrait;
+    use ValidationTrait, ApiResponseTrait;
 
     public function authorize()
     {
@@ -36,7 +37,7 @@ class CompteFilterRequest extends FormRequest
     {
         $errors = $this->validateFilterPayload($this->all());
         if (!empty($errors)) {
-            throw new HttpResponseException(response()->json(['success' => false, 'errors' => $errors], 400));
+            throw new HttpResponseException($this->validationErrorResponse($errors, 'Validation des filtres invalide', 400));
         }
     }
 }
