@@ -7,10 +7,14 @@ use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Compte extends Model
 {
     use HasFactory;
+
+    // enable soft deletes for logical removal
+    use SoftDeletes;
 
     protected $table = 'comptes';
     // use integer autoincrement id to match the database migration
@@ -34,6 +38,8 @@ class Compte extends Model
         'is_admin_managed',
         'solde',
         'archived',
+        // soft delete / fermeture
+        'date_fermeture',
     ];
 
     protected $casts = [
@@ -41,6 +47,7 @@ class Compte extends Model
         'date_debut_blocage' => 'date',
         'date_fin_blocage' => 'date',
         'archived' => 'boolean',
+        'date_fermeture' => 'datetime',
         'solde' => 'decimal:2',
     ];
 

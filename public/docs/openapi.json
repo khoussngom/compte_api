@@ -324,157 +324,176 @@
         },
         "components": {
             "schemas": {
-            "Compte": {
-                "type": "object",
-                "properties": {
-                "id": { "type": "string", "format": "uuid" },
-                "numeroCompte": { "type": "string" },
-                "titulaire": { "type": "string" },
-                "type": { "type": "string", "enum": ["epargne", "cheque"] },
-                "solde": { "type": "number" },
-                "devise": { "type": "string" },
-                "dateCreation": { "type": "string", "format": "date-time" },
-                "statut": { "type": "string", "enum": ["actif", "bloque", "ferme"] },
-                "dateDebutBlocage": { "type": "string", "format": "date", "nullable": true },
-                "dateFinBlocage": { "type": "string", "format": "date", "nullable": true },
-                "motifBlocage": { "type": "string", "nullable": true },
-                "archived": { "type": "boolean", "nullable": true },
-                "metadonnees": { "type": "object", "properties": { "derniereModification": { "type": "string", "format": "date-time" }, "version": { "type": "integer" } } }
-                }
-            },
-            "Pagination": {
-                "type": "object",
-                "properties": {
-                "currentPage": { "type": "integer" },
-                "totalPages": { "type": "integer" },
-                "totalItems": { "type": "integer" },
-                "itemsPerPage": { "type": "integer" },
-                "hasNext": { "type": "boolean" },
-                "hasPrevious": { "type": "boolean" }
-                }
-            },
-            "Links": {
-                "type": "object",
-                "properties": {
-                "self": { "type": "string" },
-                "next": { "type": "string" },
-                "first": { "type": "string" },
-                "last": { "type": "string" }
-                }
-            },
-            "ComptesResponse": {
-                "type": "object",
-                "properties": {
-                "success": { "type": "boolean" },
-                "data": { "type": "array", "items": { "$ref": "#/components/schemas/Compte" } },
-                "pagination": { "$ref": "#/components/schemas/Pagination" },
-                "links": { "$ref": "#/components/schemas/Links" }
-                }
-            },
-            "AccountCreationSuccessResponse": {
-                "type": "object",
-                "properties": {
-                "success": { "type": "boolean", "example": true },
-                "message": { "type": "string", "example": "Compte créé avec succès" },
-                "data": {
+                "Compte": {
                     "type": "object",
                     "properties": {
-                    "id": { "type": "string", "example": "660f9511-f30c-52e5-b827-557766551111" },
-                    "numeroCompte": { "type": "string", "example": "C00123460" },
-                    "titulaire": { "type": "string", "example": "Cheikh Sy" },
-                    "type": { "type": "string", "example": "cheque" },
-                    "solde": { "type": "number", "example": 500000 },
-                    "devise": { "type": "string", "example": "FCFA" },
-                    "dateCreation": { "type": "string", "format": "date-time", "example": "2025-10-19T10:30:00Z" },
-                    "statut": { "type": "string", "example": "actif" },
-                    "metadata": {
-                        "type": "object",
-                        "properties": {
-                        "derniereModification": { "type": "string", "format": "date-time", "example": "2025-10-19T10:30:00Z" },
-                        "version": { "type": "integer", "example": 1 }
-                        }
+                        "id": { "type": "string", "format": "uuid" },
+                        "numeroCompte": { "type": "string" },
+                        "titulaire": { "type": "string" },
+                        "type": { "type": "string", "enum": ["epargne", "cheque"] },
+                        "solde": { "type": "number" },
+                        "devise": { "type": "string" },
+                        "dateCreation": { "type": "string", "format": "date-time" },
+                        "statut": { "type": "string", "enum": ["actif", "bloque", "ferme"] },
+                        "dateDebutBlocage": { "type": "string", "format": "date", "nullable": true },
+                        "dateFinBlocage": { "type": "string", "format": "date", "nullable": true },
+                        "dateFermeture": { "type": "string", "format": "date-time", "nullable": true },
+                        "motifBlocage": { "type": "string", "nullable": true },
+                        "archived": { "type": "boolean", "nullable": true },
+                        "metadonnees": { "type": "object", "properties": { "derniereModification": { "type": "string", "format": "date-time" }, "version": { "type": "integer" } } }
                     }
-                    }
-                }
-                }
-            },
-            "AccountUpdateSuccessResponse": {
-                "type": "object",
-                "properties": {
-                "success": { "type": "boolean", "example": true },
-                "message": { "type": "string", "example": "Compte mis à jour avec succès" },
-                "data": { "$ref": "#/components/schemas/Compte" }
-                }
-            },
-            "ValidationErrorResponse": {
-                "type": "object",
-                "properties": {
-                "success": { "type": "boolean", "example": false },
-                "error": {
+                },
+
+                "Pagination": {
                     "type": "object",
                     "properties": {
-                    "code": { "type": "string", "example": "VALIDATION_ERROR" },
-                    "message": { "type": "string", "example": "Les données fournies sont invalides" },
-                    "details": {
-                        "type": "object",
-                        "additionalProperties": { "type": "string" },
-                        "example": {
-                        "soldeInitial": "Le solde initial doit être supérieur ou égal à 10000"
+                        "currentPage": { "type": "integer" },
+                        "totalPages": { "type": "integer" },
+                        "totalItems": { "type": "integer" },
+                        "itemsPerPage": { "type": "integer" },
+                        "hasNext": { "type": "boolean" },
+                        "hasPrevious": { "type": "boolean" }
+                    }
+                },
+
+                "Links": {
+                    "type": "object",
+                    "properties": {
+                        "self": { "type": "string" },
+                        "next": { "type": "string" },
+                        "first": { "type": "string" },
+                        "last": { "type": "string" }
+                    }
+                },
+
+                "ComptesResponse": {
+                    "type": "object",
+                    "properties": {
+                        "success": { "type": "boolean" },
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Compte" } },
+                        "pagination": { "$ref": "#/components/schemas/Pagination" },
+                        "links": { "$ref": "#/components/schemas/Links" }
+                    }
+                },
+
+                "AccountCreationSuccessResponse": {
+                    "type": "object",
+                    "properties": {
+                        "success": { "type": "boolean", "example": true },
+                        "message": { "type": "string", "example": "Compte créé avec succès" },
+                        "data": {
+                            "type": "object",
+                            "properties": {
+                                "id": { "type": "string", "example": "660f9511-f30c-52e5-b827-557766551111" },
+                                "numeroCompte": { "type": "string", "example": "C00123460" },
+                                "titulaire": { "type": "string", "example": "Cheikh Sy" },
+                                "type": { "type": "string", "example": "cheque" },
+                                "solde": { "type": "number", "example": 500000 },
+                                "devise": { "type": "string", "example": "FCFA" },
+                                "dateCreation": { "type": "string", "format": "date-time", "example": "2025-10-19T10:30:00Z" },
+                                "statut": { "type": "string", "example": "actif" },
+                                "metadata": {
+                                    "type": "object",
+                                    "properties": {
+                                        "derniereModification": { "type": "string", "format": "date-time", "example": "2025-10-19T10:30:00Z" },
+                                        "version": { "type": "integer", "example": 1 }
+                                    }
+                                }
+                            }
                         }
                     }
+                },
+
+                "AccountUpdateSuccessResponse": {
+                    "type": "object",
+                    "properties": {
+                        "success": { "type": "boolean", "example": true },
+                        "message": { "type": "string", "example": "Compte mis à jour avec succès" },
+                        "data": { "$ref": "#/components/schemas/Compte" }
+                    }
+                },
+
+                "AccountDeleteSuccessResponse": {
+                    "type": "object",
+                    "properties": {
+                        "success": { "type": "boolean", "example": true },
+                        "message": { "type": "string", "example": "Compte supprimé avec succès" },
+                        "data": { "$ref": "#/components/schemas/Compte" }
+                    }
+                },
+
+                "ValidationErrorResponse": {
+                    "type": "object",
+                    "properties": {
+                        "success": { "type": "boolean", "example": false },
+                        "error": {
+                            "type": "object",
+                            "properties": {
+                                "code": { "type": "string", "example": "VALIDATION_ERROR" },
+                                "message": { "type": "string", "example": "Les données fournies sont invalides" },
+                                "details": {
+                                    "type": "object",
+                                    "additionalProperties": { "type": "string" },
+                                    "example": {
+                                        "soldeInitial": "Le solde initial doit être supérieur ou égal à 10000"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+
+                "UserWithClient": {
+                    "type": "object",
+                    "properties": {
+                        "id": { "type": "string" },
+                        "nom": { "type": "string" },
+                        "prenom": { "type": "string" },
+                        "email": { "type": "string" },
+                        "telephone": { "type": "string" },
+                        "client": { "type": "object" }
+                    }
+                },
+
+                "UserWithAdmin": {
+                    "type": "object",
+                    "properties": {
+                        "id": { "type": "string" },
+                        "nom": { "type": "string" },
+                        "prenom": { "type": "string" },
+                        "email": { "type": "string" },
+                        "telephone": { "type": "string" },
+                        "admin": { "type": "object" }
+                    }
+                },
+
+                "BlocageRequest": {
+                    "type": "object",
+                    "required": ["date_debut_blocage", "date_fin_blocage", "motif_blocage"],
+                    "properties": {
+                        "date_debut_blocage": { "type": "string", "format": "date", "example": "2025-10-25" },
+                        "date_fin_blocage": { "type": "string", "format": "date", "example": "2025-10-28" },
+                        "motif_blocage": { "type": "string", "example": "Suspicion de fraude" }
+                    }
+                },
+
+                "BlocageResponse": {
+                    "type": "object",
+                    "properties": {
+                        "success": { "type": "boolean", "example": true },
+                        "message": { "type": "string", "example": "Données de blocage enregistrées" },
+                        "data": { "$ref": "#/components/schemas/Compte" }
+                    }
+                },
+
+                "ArchiveResponse": {
+                    "type": "object",
+                    "properties": {
+                        "success": { "type": "boolean", "example": true },
+                        "message": { "type": "string", "example": "Compte archivé avec succès" },
+                        "data": { "$ref": "#/components/schemas/Compte" }
                     }
                 }
-                }
-            },
-            "UserWithClient": {
-                "type": "object",
-                "properties": {
-                "id": { "type": "string" },
-                "nom": { "type": "string" },
-                "prenom": { "type": "string" },
-                "email": { "type": "string" },
-                "telephone": { "type": "string" },
-                "client": { "type": "object" }
-                }
-            },
-            "UserWithAdmin": {
-                "type": "object",
-                "properties": {
-                "id": { "type": "string" },
-                "nom": { "type": "string" },
-                "prenom": { "type": "string" },
-                "email": { "type": "string" },
-                "telephone": { "type": "string" },
-                "admin": { "type": "object" }
-                }
-            }
-            ,
-            "BlocageRequest": {
-                "type": "object",
-                "required": ["date_debut_blocage", "date_fin_blocage", "motif_blocage"],
-                "properties": {
-                    "date_debut_blocage": { "type": "string", "format": "date", "example": "2025-10-25" },
-                    "date_fin_blocage": { "type": "string", "format": "date", "example": "2025-10-28" },
-                    "motif_blocage": { "type": "string", "example": "Suspicion de fraude" }
-                }
-            },
-            "BlocageResponse": {
-                "type": "object",
-                "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "message": { "type": "string", "example": "Données de blocage enregistrées" },
-                    "data": { "$ref": "#/components/schemas/Compte" }
-                }
-            }
-            ,
-            "ArchiveResponse": {
-                "type": "object",
-                "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "message": { "type": "string", "example": "Compte archivé avec succès" },
-                    "data": { "$ref": "#/components/schemas/Compte" }
-                }
-            }
             }
         }
-}
+    }

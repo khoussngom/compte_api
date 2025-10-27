@@ -32,6 +32,9 @@ Route::middleware('cors')->group(function () {
     // Patch to update compte by id or numero (fields optional, at least one required)
     Route::patch('comptes/{identifiant}', [CompteController::class, 'update'])->middleware('logging');
 
+    // Soft delete (logical delete) a compte: set statut to 'ferme', date_fermeture and soft-delete
+    Route::delete('comptes/{compteId}', [CompteController::class, 'destroy'])->middleware('logging');
+
     Route::get('comptes/{numero}', [CompteController::class, 'show']);
 
     // Public account creation endpoint
