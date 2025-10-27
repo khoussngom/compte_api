@@ -48,7 +48,7 @@ BEGIN
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='comptes' AND column_name='client_id') THEN
-        ALTER TABLE comptes ADD COLUMN client_id varchar(36);
+        ALTER TABLE comptes ADD COLUMN client_id uuid;
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='comptes' AND column_name='archived') THEN

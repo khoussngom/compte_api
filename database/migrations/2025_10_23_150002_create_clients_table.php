@@ -8,15 +8,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('clients', function (Blueprint $table) {
-            $table->id();
-            $table->bigInteger('user_id')->notNull();
+            // Use UUID primary key to align with users and other relations
+            $table->uuid('id')->primary();
+            // store user_id as uuid
+            $table->uuid('user_id');
             $table->string('nom')->nullable();
             $table->string('prenom')->nullable();
             $table->string('email')->nullable();
             $table->string('telephone')->nullable();
             $table->string('adresse')->nullable();
+            $table->date('date_naissance')->nullable();
             $table->timestamps();
-            // foreign key added in a separate migration
+            // foreign key may be added in a separate migration
         });
     }
 

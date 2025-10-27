@@ -23,9 +23,7 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        $uuid = (string) \Illuminate\Support\Str::uuid();
         return [
-            'id' => $uuid,
             'nom' => fake()->lastName(),
             'prenom' => fake()->firstName(),
             'email' => fake()->unique()->safeEmail(),

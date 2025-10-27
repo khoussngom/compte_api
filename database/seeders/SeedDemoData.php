@@ -18,6 +18,7 @@ class SeedDemoData extends Seeder
         $users = [];
         for ($i = 1; $i <= 5; $i++) {
             $users[] = [
+                'id' => (string) Str::uuid(),
                 'nom' => 'User'.$i,
                 'prenom' => 'Demo'.$i,
                 'email' => "user{$i}@example.com",
@@ -41,10 +42,10 @@ class SeedDemoData extends Seeder
                 $numero = 'C' . str_pad((string) rand(100000, 999999), 8, '0', STR_PAD_LEFT);
                 $type = rand(0,1) ? 'epargne' : 'cheque';
                 $comptes[] = [
+                        'id' => (string) Str::uuid(),
                     'numero_compte' => $numero,
                     'titulaire_compte' => 'Titulaire '.$userId,
                     // fill both legacy `type` and new `type_compte` to be compatible
-                    'type' => $type,
                     'type_compte' => $type,
                     'devise' => 'CFA',
                     'date_creation' => now()->toDateString(),
@@ -62,7 +63,7 @@ class SeedDemoData extends Seeder
         DB::table('comptes')->upsert(
             $comptes,
             ['numero_compte'],
-            ['titulaire_compte','type','type_compte','devise','date_creation','statut_compte','motif_blocage','version','user_id','solde','updated_at']
+            ['titulaire_compte','type_compte','devise','date_creation','statut_compte','motif_blocage','version','user_id','solde','updated_at']
         );
 
         $createdComptes = DB::table('comptes')->pluck('id')->all();

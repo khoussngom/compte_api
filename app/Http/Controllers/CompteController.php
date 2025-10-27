@@ -245,9 +245,7 @@ class CompteController extends Controller
     return $this->respondWithResource(new CompteResource($compte), 'Compte débloqué avec succès');
     }
 
-    /**
-     * Récupère un compte par son numéro.
-     */
+
     public function showByNumero($numeroCompte, CompteLookupService $service)
     {
         $compte = $service->findByNumero($numeroCompte);
@@ -260,13 +258,9 @@ class CompteController extends Controller
     return $this->respondWithResource($resource, 'Détail du compte récupéré');
     }
 
-    /**
-     * Mettre à jour un compte (par id ou numero_compte). Tous les champs sont optionnels,
-     * mais au moins un doit être fourni.
-     */
+
     public function update(UpdateCompteRequest $request, $identifiant)
     {
-        // resolve compte by id or numero
         $compte = Compte::find($identifiant);
         if (!$compte) {
             $compte = Compte::where('numero_compte', $identifiant)->first();
@@ -327,9 +321,7 @@ class CompteController extends Controller
     return $this->respondWithResource(new CompteResource($compte->fresh('client')), 'Compte mis à jour avec succès', 201);
     }
 
-    /**
-     * Soft-delete a compte: set statut to 'ferme', set date_fermeture, then soft delete
-     */
+
     public function destroy($compteId)
     {
         $compte = Compte::find($compteId);

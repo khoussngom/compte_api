@@ -4,6 +4,7 @@ namespace App\Traits;
 use App\Models\Compte;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
+use App\Jobs\RestoreFromBufferJob;
 
 trait BlocageTrait
 {
@@ -53,6 +54,13 @@ trait BlocageTrait
         $compte->save();
 
         Log::channel('comptes')->info('Compte débloqué', ['compte_id' => $compte->id, 'motif' => $motif, 'initiator' => $initiator]);
+
+        // Attempt to restore from buffer Neon asynchronously (in case the compte was moved)
+        try {
+            RestoreFromBufferJob::dispatch($compte->numero_compte);
+        } catch (\Throwable $e) {
+            Log::channel('comptes')->warning('Failed to dispatch RestoreFromBufferJob', ['numero_compte' => $compte->numero_compte, 'error' => $e->getMessage()]);
+        }
 
         return $compte->fresh();
     }

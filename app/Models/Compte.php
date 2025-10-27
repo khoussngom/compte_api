@@ -2,24 +2,24 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use App\Models\Client;
 use App\Models\Transaction;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Compte extends Model
 {
     use HasFactory;
+    use HasUuids;
 
-    // enable soft deletes for logical removal
     use SoftDeletes;
 
     protected $table = 'comptes';
-    // use integer autoincrement id to match the database migration
-    protected $keyType = 'int';
-    public $incrementing = true;
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
         'numero_compte',
@@ -58,30 +58,47 @@ class Compte extends Model
         parent::boot();
 
         static::addGlobalScope('non_archived', function ($query) {
-            // Use explicit SQL boolean literal to avoid PDO sending 0/1 which
-            // PostgreSQL rejects for boolean comparison (boolean = integer).
             $query->whereRaw('archived = false');
         });
 
-        // Generate a unique numero_compte when creating
         static::creating(function ($compte) {
             if (empty($compte->numero_compte)) {
                 $compte->numero_compte = static::generateNumero();
             }
+            if (array_key_exists('archived', $compte->attributes) || isset($compte->archived)) {
+                $val = $compte->attributes['archived'] ?? $compte->archived;
+                if (is_bool($val)) {
+                    $compte->attributes['archived'] = $val ? 't' : 'f';
+                }
+            }
+        });
+
+        static::updating(function ($compte) {
+            if (array_key_exists('archived', $compte->attributes) || isset($compte->archived)) {
+                $val = $compte->attributes['archived'] ?? $compte->archived;
+                if (is_bool($val)) {
+                    $compte->attributes['archived'] = $val ? 't' : 'f';
+                }
+            }
         });
     }
 
-    // Scope pour rechercher par numéro de compte
     public function scopeNumero($query, $numero)
     {
         return $query->where('numero_compte', $numero);
     }
 
-    // Scope pour rechercher les comptes liés à un client (par téléphone)
-    public function scopeClient($query, $telephone)
+    public function scopeClient($queryOrTelephone, $telephone = null)
     {
-        return $query->whereHas('client', function ($q) use ($telephone) {
-            $q->where('telephone', $telephone);
+        if ($queryOrTelephone instanceof \Illuminate\Database\Eloquent\Builder) {
+            $query = $queryOrTelephone;
+        } else {
+            $query = static::query();
+            $telephone = $queryOrTelephone;
+        }
+
+        return $query->whereHas('clientRelation', function ($q) use ($telephone) {
+            $q->where('telephone', (string) $telephone);
         });
     }
 
@@ -90,9 +107,15 @@ class Compte extends Model
         return $this->hasMany(Transaction::class, 'compte_id');
     }
 
-    public function client()
+    public function clientRelation()
     {
         return $this->belongsTo(Client::class, 'client_id');
+    }
+
+
+    public function getClientAttribute()
+    {
+        return $this->clientRelation()->getResults();
     }
 
     /**
@@ -110,14 +133,12 @@ class Compte extends Model
 
     public function getSoldeAttribute()
     {
-        // If there are transactions, calculate from them
         if ($this->transactions()->exists()) {
             $depot = $this->transactions()->where('type', 'depot')->sum('montant');
             $retrait = $this->transactions()->where('type', 'retrait')->sum('montant');
             return $depot - $retrait;
         }
 
-        // Otherwise return the stored solde value
         return $this->attributes['solde'] ?? 0;
     }
 
@@ -131,10 +152,7 @@ class Compte extends Model
         return $query->where('type_compte', $type);
     }
 
-    /**
-     * Generate a reasonably unique account number.
-     * Format: ACC-YYYYMMDD-XXXX where XXXX is a random 4-digit number.
-     */
+
     public static function generateNumero(): string
     {
         do {

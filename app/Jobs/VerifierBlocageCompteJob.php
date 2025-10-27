@@ -14,11 +14,7 @@ class VerifierBlocageCompteJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Handle the job.
-     * - Archive comptes bloqués dont le blocage est terminé depuis longtemps.
-     * - Bloque automatiquement les comptes dont la date de début de blocage est atteinte.
-     */
+
     public function handle()
     {
         $this->archiverComptesBloques();

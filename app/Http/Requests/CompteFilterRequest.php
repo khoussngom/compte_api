@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Traits\ApiResponseTrait;
+use App\Traits\Validators\ValidationTrait;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use App\Traits\Validators\ValidationTrait;
-use App\Traits\ApiResponseTrait;
 
 class CompteFilterRequest extends FormRequest
 {
@@ -18,7 +18,6 @@ class CompteFilterRequest extends FormRequest
 
     public function rules()
     {
-        // handled by ValidationTrait in passedValidation
         return [];
     }
 

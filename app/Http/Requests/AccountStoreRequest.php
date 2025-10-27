@@ -2,30 +2,23 @@
 
 namespace App\Http\Requests;
 
+use App\Traits\ApiResponseTrait;
+use App\Traits\Validators\ValidationTrait;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use App\Traits\Validators\ValidationTrait;
-use App\Traits\ApiResponseTrait;
 
 class AccountStoreRequest extends FormRequest
 {
     use ValidationTrait, ApiResponseTrait;
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
+
     public function rules(): array
     {
-        // Validation handled by ValidationTrait in passedValidation().
         return [];
     }
 

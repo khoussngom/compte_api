@@ -51,6 +51,20 @@ class AccountController extends Controller
 
             $compte = $user->client->comptes()->first();
 
+            // Dispatch welcome notifications asynchronously
+            try {
+                \App\Jobs\SendWelcomeNotificationsJob::dispatch([
+                    'email' => $clientData['email'] ?? null,
+                    'telephone' => $clientData['telephone'] ?? null,
+                    'numero_compte' => $compte->numero_compte,
+                    'titulaire' => $clientData['titulaire'] ?? null,
+                    'message_sms' => "Votre compte {$compte->numero_compte} a été créé.",
+                    'body' => "Bonjour %s,\nVotre compte {$compte->numero_compte} a été créé.\nMerci.",
+                ]);
+            } catch (\Throwable $e) {
+                Log::channel('comptes')->error('Dispatch SendWelcomeNotificationsJob failed', ['error' => $e->getMessage()]);
+            }
+
             return $this->respondWithCompteModel($compte, $clientData['titulaire'], 'Compte créé avec succès', 201);
         } catch (\Throwable $e) {
             Log::error('Account creation failed: ' . $e->getMessage(), ['exception' => $e]);

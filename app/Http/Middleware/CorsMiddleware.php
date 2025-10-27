@@ -8,9 +8,7 @@ use Illuminate\Http\Response;
 
 class CorsMiddleware
 {
-    /**
-     * Handle an incoming request and add CORS headers.
-     */
+
     public function handle(Request $request, Closure $next)
     {
         if ($request->getMethod() === 'OPTIONS') {

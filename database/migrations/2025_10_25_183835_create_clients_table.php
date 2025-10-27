@@ -11,9 +11,16 @@ return new class extends Migration
 
     public function up(): void
     {
+        // Avoid creating the table if it already exists (some environments include an earlier migration)
+        if (Schema::hasTable('clients')) {
+            return;
+        }
+
         Schema::create('clients', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            // store user_id as uuid to match users.id
+            $table->uuid('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('adresse')->nullable();
             $table->date('date_naissance')->nullable();
             $table->timestamps();

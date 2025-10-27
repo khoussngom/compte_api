@@ -40,7 +40,6 @@ class DiagController extends BaseController
             try {
                 $uri = $r->uri();
             } catch (\Throwable $e) {
-                // some routes may not expose uri() the same way; skip
                 continue;
             }
             if (strpos($uri, 'comptes') !== false || strpos($uri, 'api/v1') !== false) {

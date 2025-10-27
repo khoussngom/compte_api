@@ -12,14 +12,21 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
+    use HasUuids;
+
+    // Use UUID primary keys for users
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'nom',
         'prenom',
         'email',
@@ -51,14 +58,13 @@ class User extends Authenticatable
 
     public static function createAccount(array $data, array $compteOverrides = []): self
     {
-        // Try a normal transaction first. If connection is in an aborted state (Postgres 25P02)
-        // we create a temporary DB connection and retry the same transactional work there.
         $defaultConn = DB::getDefaultConnection();
         try {
             DB::purge($defaultConn);
             DB::reconnect($defaultConn);
         } catch (\Throwable $e) {
-            // ignore purge/reconnect failures
+
+
         }
 
         $work = function () use ($data, $compteOverrides) {
@@ -86,7 +92,7 @@ class User extends Authenticatable
                 ]);
             } else {
                 $user = $existing;
-                // update activation code for existing user if needed
+
                 $user->fill([
                     'activation_code' => (string) $activationCode,
                     'activation_expires_at' => $activationExpires,
@@ -106,7 +112,7 @@ class User extends Authenticatable
                 $user->load('client');
             }
 
-            // Create Compte for client
+
             $numero = Compte::generateNumero();
             $compteDefaults = [
                 'client_id' => $user->client->id,
@@ -128,7 +134,7 @@ class User extends Authenticatable
                 });
             }
 
-            // Send SMS via message service if available — currently we log the action in createAccount
+
             if (! empty($user->telephone)) {
                 try {
                     $service = app()->make(\App\Services\MessageServiceInterface::class);
@@ -144,11 +150,11 @@ class User extends Authenticatable
         try {
             return $work();
         } catch (\Illuminate\Database\QueryException $ex) {
-            // If Postgres reports the connection/transaction as aborted, retry on a fresh connection
+
             $code = $ex->getCode();
             $msg = $ex->getMessage();
             if ($code === '25P02' || str_contains($msg, 'current transaction is aborted')) {
-                // create a temporary connection based on current default connection
+
                 $connConfig = config("database.connections.{$defaultConn}");
                 if (! $connConfig) {
                     throw $ex;
@@ -156,22 +162,17 @@ class User extends Authenticatable
 
                 $tempName = $defaultConn . '_temp_' . uniqid();
                 config(["database.connections.{$tempName}" => $connConfig]);
-                // ensure fresh connection
+
                 DB::purge($tempName);
                 DB::reconnect($tempName);
 
-                // If the new connection somehow starts in an aborted transaction state,
-                // attempt an explicit ROLLBACK to clear it before starting our transaction.
                 try {
                     $pdo = DB::connection($tempName)->getPdo();
-                    // exec returns false on failure; wrap in try/catch to ignore errors
                     try {
                         $pdo->exec('ROLLBACK');
                     } catch (\Throwable $_) {
-                        // ignore - ROLLBACK may fail if no transaction exists
                     }
                 } catch (\Throwable $_) {
-                    // if we cannot get PDO, proceed and let the transaction attempt fail
                 }
 
                 $prevDefault = config('database.default');
@@ -180,7 +181,6 @@ class User extends Authenticatable
                     Log::info("Retrying createAccount on temporary DB connection {$tempName}");
                     return $work();
                 } finally {
-                    // restore default connection and disconnect temp
                     DB::setDefaultConnection($prevDefault);
                     try { DB::disconnect($tempName); } catch (\Throwable $_) {}
                 }

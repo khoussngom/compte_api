@@ -4,15 +4,13 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\Cache;
 
 class RatingMiddleware
 {
     use ApiResponseTrait;
-    /**
-     * Limite le nombre de requêtes par utilisateur (exemple: 100 requêtes/heure).
-     */
+
     public function handle(Request $request, Closure $next)
     {
         $userId = $request->user() ? $request->user()->id : $request->ip();

@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('account_transactions', function (Blueprint $table) {
             $table->id();
             // créer la FK inline pour s'assurer que le type et la contrainte sont définis ensemble
-            $table->foreignId('compte_id')->constrained('comptes')->onDelete('cascade');
+            // comptes.id is UUID, so store as uuid here
+            $table->uuid('compte_id');
+            $table->foreign('compte_id')->references('id')->on('comptes')->onDelete('cascade');
             $table->decimal('montant', 15, 2)->default(0);
             $table->string('type')->default('debit');
             $table->timestamps();

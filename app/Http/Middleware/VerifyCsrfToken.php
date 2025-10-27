@@ -8,22 +8,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as BaseVerifier;
 
 class VerifyCsrfToken extends BaseVerifier
 {
-    /**
-     * The URIs that should be excluded from CSRF verification.
-     *
-     * We exclude our local-mounted API prefixes so tools like Swagger UI
-     * or curl can call PATCH/POST without a CSRF token during local dev.
-     * Keep these patterns conservative and adjust for production as needed.
-     *
-     * @var array<int, string>
-     */
-    /**
-     * We intentionally keep the default empty and only add the exemptions when
-     * running in the local environment. This avoids weakening CSRF protection
-     * in staging/production unintentionally.
-     *
-     * @var array<int,string>
-     */
+
     protected $except = ['khouss.ngom/api/v1/comptes/*',];
 
     public function __construct()
@@ -37,13 +22,7 @@ class VerifyCsrfToken extends BaseVerifier
         }
     }
 
-    /**
-     * Override the parent to add logging for diagnostics.
-     * This will record the request path and whether it matched an exemption.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return bool
-     */
+
     protected function inExceptArray($request)
     {
         $path = $request->path();

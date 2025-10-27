@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\MessageServiceInterface;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use App\Traits\Validators\ValidationTrait;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Routing\Controller;
+use App\Services\MessageServiceInterface;
+use App\Traits\Validators\ValidationTrait;
 
 class MessageController extends Controller
 {
@@ -19,9 +19,7 @@ class MessageController extends Controller
         $this->messageService = $messageService;
     }
 
-    /**
-     * Generic send endpoint. Accepts JSON { to, message } and uses the bound service.
-     */
+
     public function send(Request $request)
     {
         $data = $request->all();

@@ -9,11 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class LoggingMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
+
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
@@ -25,9 +21,6 @@ class LoggingMiddleware
         return $response;
     }
 
-    /**
-     * Log les opérations de création
-     */
     private function logCreationOperation(Request $request, Response $response): void
     {
         $operationName = $this->getOperationName($request);
@@ -50,9 +43,7 @@ class LoggingMiddleware
         }
     }
 
-    /**
-     * Détermine le nom de l'opération basé sur l'URL
-     */
+
     private function getOperationName(Request $request): ?string
     {
         $path = $request->path();
@@ -80,9 +71,6 @@ class LoggingMiddleware
         return 'Création de ressource';
     }
 
-    /**
-     * Détermine le nom de la ressource basé sur l'URL
-     */
     private function getResourceName(Request $request): ?string
     {
         $path = $request->path();

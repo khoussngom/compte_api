@@ -102,6 +102,26 @@ return [
             ]) : [],
         ],
 
+        // Additional buffer (Neon) connection used to store archived/transfered comptes
+        'neon_buffer' => [
+            'driver' => 'pgsql',
+            // Allow overriding via env; default to the provided Neon connection string
+            'url' => env('NEON_BUFFER_URL', 'postgresql://neondb_owner:npg_rWXE6Peg3oqh@ep-curly-tooth-ad70q4op-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'),
+            'host' => env('NEON_BUFFER_HOST', null),
+            'port' => is_numeric(env('NEON_BUFFER_PORT')) ? (int) env('NEON_BUFFER_PORT') : null,
+            'database' => env('NEON_BUFFER_DATABASE', null),
+            'username' => env('NEON_BUFFER_USERNAME', null),
+            'password' => env('NEON_BUFFER_PASSWORD', null),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'require',
+            'options' => extension_loaded('pdo_pgsql') ? array_filter([
+                PDO::ATTR_EMULATE_PREPARES => true,
+            ]) : [],
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
