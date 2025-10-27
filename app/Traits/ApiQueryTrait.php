@@ -24,6 +24,19 @@ trait ApiQueryTrait
             });
         }
 
+        // Filtrer par archived (Postgres: boolean).
+        // Accepter true/false, 1/0, "true"/"false" etc. et caster proprement.
+            if ($request->has('archived')) {
+                $archivedRaw = $request->query('archived');
+                // FILTER_NULL_ON_FAILURE returns null if the value is not recognizable
+                // (ex: 'foo'), avoiding adding an invalid where clause.
+                $archived = filter_var($archivedRaw, \FILTER_VALIDATE_BOOLEAN, \FILTER_NULL_ON_FAILURE);
+                if (!is_null($archived)) {
+                    // Use SQL boolean literal to ensure Postgres compares boolean to boolean
+                    $query->whereRaw('archived = ' . ($archived ? 'true' : 'false'));
+                }
+        }
+
         // Tri
         $sort = $request->query('sort', 'date_creation');
         $order = $request->query('order', 'desc');

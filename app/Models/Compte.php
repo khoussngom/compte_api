@@ -49,7 +49,9 @@ class Compte extends Model
         parent::boot();
 
         static::addGlobalScope('non_archived', function ($query) {
-            $query->where('archived', false);
+            // Use explicit SQL boolean literal to avoid PDO sending 0/1 which
+            // PostgreSQL rejects for boolean comparison (boolean = integer).
+            $query->whereRaw('archived = false');
         });
 
         // Generate a unique numero_compte when creating

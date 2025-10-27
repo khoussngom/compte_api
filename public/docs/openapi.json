@@ -1,12 +1,37 @@
 {
-        "openapi": "3.0.0",
-        "info": {
-            "title": "Compte API",
-            "version": "v1",
-            "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Compte API",
+        "version": "v1",
+        "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
+    },
+    "servers": [
+        { "url": "http://localhost:8000/khouss.ngom", "description": "Local dev (use /khouss.ngom prefix)" },
+        { "url": "https://khouss.ngom", "description": "Production API host (khouss.ngom)" }
+    ],
+    "paths": {
+        "/api/v1/comptes/{id}/archive": {
+            "post": {
+                "summary": "Archiver un compte (marquer comme archived)",
+                "tags": ["Comptes"],
+                "parameters": [
+                    { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" }, "description": "ID du compte à archiver" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte archivé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ArchiveResponse" }
+                            }
+                        }
+                    },
+                    "403": { "description": "Accès refusé" },
+                    "404": { "description": "Compte introuvable" }
+                }
+            }
         },
-        "paths": {
-            "/api/comptes": {
+            "/api/v1/comptes": {
             "get": {
                 "summary": "Lister tous les comptes",
                 "description": "Récupère une liste paginée de comptes avec possibilité de filtrage et tri",
@@ -32,13 +57,13 @@
                 }
             }
             },
-            "/api/comptes-demo": {
+            "/api/v1/comptes-demo": {
             "get": {
                 "summary": "Endpoint de démonstration public pour la doc",
                 "responses": { "200": { "description": "OK" } }
             }
             },
-            "/api/accounts": {
+            "/api/v1/accounts": {
             "post": {
                 "summary": "Créer un compte bancaire avec client",
                 "description": "Crée un utilisateur, un client et un compte bancaire avec validation stricte.",
@@ -107,7 +132,7 @@
                 }
             }
             },
-            "/api/users/clients": {
+            "/api/v1/users/clients": {
             "get": {
                 "summary": "Lister les utilisateurs qui sont clients",
                 "tags": ["Users"],
@@ -119,7 +144,7 @@
                 }
             }
             },
-            "/api/users/admins": {
+            "/api/v1/users/admins": {
             "get": {
                 "summary": "Lister les utilisateurs qui sont admins",
                 "tags": ["Users"],
@@ -132,7 +157,54 @@
             }
             }
             ,
-            "/api/khouss/v1/comptes/{compte}/bloquer": {
+            "/api/v1/comptes/{numeroCompte}": {
+                "get": {
+                    "summary": "Récupérer un compte par son numéro (Admin ou Client)",
+                    "tags": ["Comptes"],
+                    "parameters": [
+                        { "name": "numeroCompte", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Numéro de compte (numero_compte)" }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Compte récupéré",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": { "type": "boolean" },
+                                            "data": { "$ref": "#/components/schemas/Compte" }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "403": { "description": "Accès refusé" },
+                        "404": {
+                            "description": "Compte introuvable",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": { "type": "boolean", "example": false },
+                                            "error": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "code": { "type": "string", "example": "COMPTE_NOT_FOUND" },
+                                                    "message": { "type": "string", "example": "Le compte C00123456 est introuvable" }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            ,
+            "/api/v1/comptes/{compte}/bloquer": {
                 "post": {
                     "summary": "Bloquer un compte (enregistrer période et motif)",
                     "tags": ["Comptes"],
@@ -166,7 +238,7 @@
                     }
                 }
             },
-            "/api/khouss/v1/comptes/numero/{numero}/bloquer": {
+            "/api/v1/comptes/numero/{numero}/bloquer": {
                 "post": {
                     "summary": "Bloquer un compte par numéro (numero_compte)",
                     "tags": ["Comptes"],
@@ -327,6 +399,15 @@
                 "properties": {
                     "success": { "type": "boolean", "example": true },
                     "message": { "type": "string", "example": "Données de blocage enregistrées" },
+                    "data": { "$ref": "#/components/schemas/Compte" }
+                }
+            }
+            ,
+            "ArchiveResponse": {
+                "type": "object",
+                "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Compte archivé avec succès" },
                     "data": { "$ref": "#/components/schemas/Compte" }
                 }
             }
