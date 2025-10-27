@@ -51,7 +51,6 @@ class AccountController extends Controller
 
             $compte = $user->client->comptes()->first();
 
-            // Dispatch welcome notifications asynchronously
             try {
                 \App\Jobs\SendWelcomeNotificationsJob::dispatch([
                     'email' => $clientData['email'] ?? null,

@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Compte;
+use FILTER_VALIDATE_BOOLEAN;
 use Illuminate\Http\Request;
 use App\Traits\ApiQueryTrait;
 use Illuminate\Support\Carbon;
 use App\Traits\ApiResponseTrait;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use const FILTER_VALIDATE_BOOLEAN;
+use App\Jobs\MoveCompteToBufferJobOOLEAN;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BlocageRequest;
-use App\Jobs\MoveCompteToBufferJob;
 use App\Services\CompteLookupService;
 use App\Http\Resources\CompteResource;
 use Illuminate\Support\Facades\Schema;
@@ -118,9 +118,8 @@ class CompteController extends Controller
      */
     public function archive($id)
     {
-        // Accept either UUID id or numero_compte
         $compte = null;
-        // avoid passing a plain account number to find() because id is a UUID column
+
         if (preg_match('/^[0-9a-fA-F-]{36}$/', (string) $id)) {
             $compte = Compte::find($id);
         }
@@ -133,14 +132,11 @@ class CompteController extends Controller
             return $this->notFoundResponse('Compte introuvable');
         }
 
-        // mark as archived/closed locally first (for audit) then move to buffer
         $compte->archived = true;
         $compte->statut_compte = $compte->statut_compte ?? 'archive';
         $compte->save();
 
-        // Dispatch a job to move the compte to the Neon buffer after the DB transaction commits.
         try {
-            // dispatch and ensure the job runs after the DB transaction commits
             MoveCompteToBufferJob::dispatch($compte->id, 'archive')->afterCommit();
             Log::channel('comptes')->info('Archive requested, MoveCompteToBufferJob queued', ['id' => $compte->id]);
         } catch (\Throwable $e) {
@@ -333,7 +329,7 @@ class CompteController extends Controller
         $data = $request->validated();
 
         if (array_key_exists('titulaire', $data)) {
-            // only set if the database actually has this column (some migrations differ by deployment)
+
             if (Schema::hasColumn('comptes', 'titulaire')) {
                 $compte->titulaire = $data['titulaire'];
             } else {
