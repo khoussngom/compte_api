@@ -16,7 +16,7 @@
                 "summary": "Archiver un compte (marquer comme archived)",
                 "tags": ["Comptes"],
                 "parameters": [
-                    { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "ID numérique du compte à archiver" }
+                    { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6" }, "description": "Identifiant du compte : UUID (id) ou numéro de compte (numero_compte)" }
                 ],
                 "responses": {
                     "200": {
@@ -265,7 +265,7 @@
                     "summary": "Bloquer un compte (enregistrer période et motif)",
                     "tags": ["Comptes"],
                     "parameters": [
-                        { "name": "compte", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "ID du compte à bloquer" }
+                        { "name": "compte", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Identifiant du compte : UUID (id) ou numéro de compte (numero_compte)" }
                     ],
                     "requestBody": {
                         "required": true,

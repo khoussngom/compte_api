@@ -8,8 +8,11 @@ use App\Traits\ApiQueryTrait;
 use Illuminate\Support\Carbon;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use const FILTER_VALIDATE_BOOLEAN;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BlocageRequest;
+use App\Jobs\MoveCompteToBufferJob;
 use App\Services\CompteLookupService;
 use App\Http\Resources\CompteResource;
 use Illuminate\Support\Facades\Schema;
@@ -25,19 +28,30 @@ class CompteController extends Controller
     use \App\Traits\BlocageTrait;
 
     /**
-     * @OA\Get(
-     *     path="/api/v1/comptes",
-     *     summary="Liste tous les comptes non archivés",
-     *     tags={"Comptes"},
-     *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="limit", in="query", required=false, @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="type", in="query", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="statut", in="query", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="sort", in="query", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="order", in="query", required=false, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Liste paginée des comptes")
-     * )
+    * @OA\Post(
+    *     path="/api/v1/comptes/{id}/archive",
+    *     summary="Archive un compte au lieu de le supprimer",
+    *     tags={"Comptes"},
+    *     @OA\Parameter(
+    *         name="id",
+    *         in="path",
+    *         required=true,
+    *         description="Identifiant du compte : UUID (id) ou numéro de compte (numero_compte)",
+    *         @OA\Schema(type="string", example="3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Compte archivé (job en file pour déplacement vers la base tampon)",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="id", type="string"),
+    *             @OA\Property(property="numeroCompte", type="string"),
+    *             @OA\Property(property="movedToBuffer", type="string", example="queued")
+    *         )
+    *     ),
+    *     @OA\Response(response=404, description="Compte introuvable"),
+    *     @OA\Response(response=400, description="Requête invalide"),
+    *     @OA\Response(response=500, description="Erreur serveur lors de l'archivage")
+    * )
      */
     public function index(CompteFilterRequest $request)
     {
@@ -92,19 +106,53 @@ class CompteController extends Controller
      *     path="/api/v1/comptes/{id}/archive",
      *     summary="Archive un compte au lieu de le supprimer",
      *     tags={"Comptes"},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string")),
+    *     @OA\Parameter(
+    *         name="id",
+    *         in="path",
+    *         required=true,
+    *         description="Identifiant du compte : UUID (id) ou numéro de compte (numero_compte)",
+    *         @OA\Schema(type="string")
+    *     ),
      *     @OA\Response(response=200, description="Compte archivé")
      * )
      */
     public function archive($id)
     {
-        $compte = Compte::find($id);
+        // Accept either UUID id or numero_compte
+        $compte = null;
+        // avoid passing a plain account number to find() because id is a UUID column
+        if (preg_match('/^[0-9a-fA-F-]{36}$/', (string) $id)) {
+            $compte = Compte::find($id);
+        }
+
+        if (! $compte) {
+            $compte = Compte::where('numero_compte', $id)->first();
+        }
+
         if (!$compte) {
             return $this->notFoundResponse('Compte introuvable');
         }
+
+        // mark as archived/closed locally first (for audit) then move to buffer
         $compte->archived = true;
+        $compte->statut_compte = $compte->statut_compte ?? 'archive';
         $compte->save();
-    return $this->respondWithResource($compte, 'Compte archivé avec succès');
+
+        // Dispatch a job to move the compte to the Neon buffer after the DB transaction commits.
+        try {
+            // dispatch and ensure the job runs after the DB transaction commits
+            MoveCompteToBufferJob::dispatch($compte->id, 'archive')->afterCommit();
+            Log::channel('comptes')->info('Archive requested, MoveCompteToBufferJob queued', ['id' => $compte->id]);
+        } catch (\Throwable $e) {
+            Log::channel('comptes')->error('Échec dispatch MoveCompteToBufferJob', ['id' => $compte->id, 'error' => $e->getMessage()]);
+            return $this->errorResponse('Erreur lors de l’archivage (job)', 500);
+        }
+
+        return $this->respondWithData([
+            'id' => $compte->id,
+            'numeroCompte' => $compte->numero_compte,
+            'movedToBuffer' => 'queued',
+        ], 'Compte archivé (job en file pour déplacement vers la base tampon)', 200);
     }
 
     /**
@@ -144,6 +192,12 @@ class CompteController extends Controller
         }
 
         $compte->save();
+        try {
+            MoveCompteToBufferJob::dispatch($compte->id, 'bloquer')->afterCommit();
+            Log::channel('comptes')->info('Bloquer requested: MoveCompteToBufferJob queued', ['id' => $compte->id]);
+        } catch (\Throwable $e) {
+            Log::channel('comptes')->warning('Échec dispatch MoveCompteToBufferJob lors du blocage', ['id' => $compte->id, 'error' => $e->getMessage()]);
+        }
 
     return $this->respondWithResource($compte, 'Données de blocage enregistrées');
     }
@@ -197,6 +251,12 @@ class CompteController extends Controller
             $compte = $this->applyBlocage($compte, $motif, $duree, $unite, $request->user()->id ?? 'api');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 400);
+        }
+        try {
+            MoveCompteToBufferJob::dispatch($compte->id, 'bloquer')->afterCommit();
+            Log::channel('comptes')->info('BloquerV2 requested: MoveCompteToBufferJob queued', ['id' => $compte->id]);
+        } catch (\Throwable $e) {
+            Log::channel('comptes')->warning('Échec dispatch MoveCompteToBufferJob lors du blocage (v2)', ['id' => $compte->id, 'error' => $e->getMessage()]);
         }
 
     return $this->respondWithResource(new CompteResource($compte), 'Compte bloqué avec succès');

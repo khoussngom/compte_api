@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Compte;
+use App\Traits\BlocageTrait;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
@@ -13,12 +14,37 @@ use Illuminate\Foundation\Bus\Dispatchable;
 class VerifierBlocageCompteJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use BlocageTrait;
 
 
     public function handle()
     {
         $this->archiverComptesBloques();
         $this->bloquerComptesAutomatiquement();
+        $this->debloquerComptesAutomatiquement();
+    }
+
+    /**
+     * Débloquer automatiquement les comptes dont la date_fin_blocage est atteinte.
+     */
+    protected function debloquerComptesAutomatiquement()
+    {
+        $now = now();
+
+        $comptes = Compte::where('statut_compte', 'bloqué')
+            ->whereNotNull('date_fin_blocage')
+            ->where('date_fin_blocage', '<=', $now)
+            ->get();
+
+        foreach ($comptes as $compte) {
+            try {
+                // Use trait applyDeblocage to log and dispatch restore job
+                $this->applyDeblocage($compte, 'auto-deblocage', 'system');
+                Log::channel('comptes')->info('Compte débloqué automatiquement', ['compte_id' => $compte->id]);
+            } catch (\Exception $e) {
+                Log::channel('comptes')->error('Erreur lors du déblocage automatique', ['compte_id' => $compte->id, 'error' => $e->getMessage()]);
+            }
+        }
     }
 
     protected function archiverComptesBloques()
