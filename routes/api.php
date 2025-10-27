@@ -22,14 +22,11 @@ Route::domain(env('API_HOST', 'khouss.ngom'))->group(function () {
         ]);
     });
 
-    // Public read-only endpoints (no auth required)
     Route::get('/comptes', [CompteController::class, 'index']);
     Route::get('/comptes/{numero}', [CompteController::class, 'show']);
 
-    // Public account creation endpoint
     Route::post('/accounts', [AccountController::class, 'store'])->middleware('logging');
 
-    // Generic message sending (uses the bound MessageServiceInterface)
     Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'send'])->middleware('logging');
 
     Route::get('/users/clients', [UserController::class, 'clients']);
