@@ -1,16 +1,14 @@
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 
 class AccountController extends Controller
 {
-    /**
-     * Create a new user + client + compte
-     */
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -97,7 +95,7 @@ class AccountController extends Controller
                         'derniereModification' => $compte->updated_at->toISOString(),
                         'version' => $compte->version ?? 1,
                     ],
-                ],
+                ],l
             ], 201);
         } catch (\Throwable $e) {
             Log::error('Account creation failed: ' . $e->getMessage(), ['exception' => $e]);

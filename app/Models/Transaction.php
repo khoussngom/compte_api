@@ -14,7 +14,11 @@ class Transaction extends Model
     protected $keyType = 'int';
     public $incrementing = true;
     protected $fillable = [
-        'montant', 'type', 'compte_id'
+        'montant', 'type', 'compte_id', 'archived'
+    ];
+
+    protected $casts = [
+        'archived' => 'boolean',
     ];
 
     public function compte()

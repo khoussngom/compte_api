@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Compte;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\BlocageCompteRequest;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use App\Traits\ApiResponseTrait;
 use App\Traits\ApiQueryTrait;
 use App\Http\Requests\CompteFilterRequest;
@@ -94,5 +97,60 @@ class CompteController extends Controller
         $compte->archived = true;
         $compte->save();
         return $this->successResponse($compte, 'Compte archivé avec succès');
+    }
+
+    /**
+     * Bloquer un compte (enregistre la période et le motif). Le blocage effectif est appliqué
+     * automatiquement par le job VerifierBlocageCompteJob lorsque la date_debut_blocage est atteinte.
+     *
+     * This method resolves the compte either by numeric id or by account number (numero_compte).
+     */
+    public function bloquer(BlocageCompteRequest $request, $compteIdentifier)
+    {
+        // Resolve compte by id or numero
+        $compte = null;
+        if (is_numeric($compteIdentifier)) {
+            $compte = Compte::find($compteIdentifier);
+        }
+
+        if (!$compte) {
+            // try by numero
+            $compte = Compte::where('numero_compte', $compteIdentifier)->first();
+        }
+
+        if (!$compte) {
+            return $this->notFoundResponse('Compte introuvable');
+        }
+
+        // mettre à jour les champs de blocage
+        $compte->date_debut_blocage = $request->input('date_debut_blocage');
+        $compte->date_fin_blocage = $request->input('date_fin_blocage');
+        $compte->motif_blocage = $request->input('motif_blocage');
+
+        // Optionnel: si la période inclut aujourd'hui, appliquer le blocage immédiatement
+        try {
+            $start = Carbon::parse($compte->date_debut_blocage)->startOfDay();
+            $end = Carbon::parse($compte->date_fin_blocage)->endOfDay();
+            if (Carbon::now()->between($start, $end)) {
+                $compte->statut_compte = 'bloqué';
+                // archive transactions immediately
+                $compte->transactions()->update(['archived' => true]);
+                Log::info('Compte bloqué immédiatement via endpoint', ['compte_id' => $compte->id]);
+            }
+        } catch (\Exception $e) {
+            // ignore parse errors; dates are validated by the request
+        }
+
+        $compte->save();
+
+        return $this->successResponse($compte, 'Données de blocage enregistrées');
+    }
+
+    /**
+     * Explicit handler for blocking by account number path param.
+     */
+    public function bloquerByNumero(BlocageCompteRequest $request, $numero)
+    {
+        return $this->bloquer($request, $numero);
     }
 }

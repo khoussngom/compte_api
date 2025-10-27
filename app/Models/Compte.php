@@ -24,6 +24,8 @@ class Compte extends Model
         'devise',
         'date_creation',
         'statut_compte',
+        'date_debut_blocage',
+        'date_fin_blocage',
         'motif_blocage',
         'version',
         'user_id',
@@ -36,6 +38,8 @@ class Compte extends Model
 
     protected $casts = [
         'date_creation' => 'date',
+        'date_debut_blocage' => 'date',
+        'date_fin_blocage' => 'date',
         'archived' => 'boolean',
         'solde' => 'decimal:2',
     ];
