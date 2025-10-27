@@ -13,7 +13,6 @@ class CorsMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        // If it's a preflight request, return a 204 with the headers
         if ($request->getMethod() === 'OPTIONS') {
             $headers = [
                 'Access-Control-Allow-Origin' => '*',
@@ -27,7 +26,6 @@ class CorsMiddleware
 
         $response = $next($request);
 
-        // Attach CORS headers to the response
         if ($response instanceof Response) {
             $response->headers->set('Access-Control-Allow-Origin', '*');
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
