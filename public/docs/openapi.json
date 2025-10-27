@@ -6,10 +6,10 @@
         "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
     },
     "servers": [
-           { "url": "/", "description": "Use same origin as Swagger UI (recommended for hosted docs)" },
-    { "url": "https://compte-api-hjvy.onrender.com/khouss.ngom", "description": "Hosted docs (Render) — production prefix /khouss.ngom (khouss.ngom)" },
-           { "url": "http://localhost:8000/khouss.ngom", "description": "Local dev (use /khouss.ngom prefix). For HTTPS testing use a tunnel (ngrok) and replace the server URL with your ngrok HTTPS URL." },
-           { "url": "https://{ngrokDomain}", "description": "HTTPS tunnel to local (replace {ngrokDomain} with your ngrok domain, e.g. abcd-1234.ngrok.io/khouss.ngom)", "variables": { "ngrokDomain": { "default": "your-ngrok-domain.example" } } }
+        { "url": "https://compte-api-hjvy.onrender.com/khouss.ngom", "description": "Hosted docs (Render) — production prefix /khouss.ngom (khouss.ngom)" },
+        { "url": "/", "description": "Use same origin as Swagger UI (recommended for hosted docs)" },
+        { "url": "http://localhost:8000/khouss.ngom", "description": "Local dev (use /khouss.ngom prefix). For HTTPS testing use a tunnel (ngrok) and replace the server URL with your ngrok HTTPS URL." },
+        { "url": "https://{ngrokDomain}", "description": "HTTPS tunnel to local (replace {ngrokDomain} with your ngrok domain, e.g. abcd-1234.ngrok.io/khouss.ngom)", "variables": { "ngrokDomain": { "default": "your-ngrok-domain.example" } } }
     ],
     "paths": {
         "/api/v1/comptes/{id}/archive": {
