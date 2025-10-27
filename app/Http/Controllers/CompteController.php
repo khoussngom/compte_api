@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CompteFilterRequest;
 use App\Http\Requests\BlocageCompteRequest;
+use App\Http\Requests\BlocageRequest;
+use App\Http\Requests\DeblocageRequest;
 use App\Services\CompteLookupService;
 use App\Http\Resources\CompteResource;
 use App\Exceptions\CompteNotFoundException;
@@ -20,6 +22,7 @@ use App\Http\Requests\UpdateCompteRequest;
 class CompteController extends Controller
 {
     use ApiResponseTrait, ApiQueryTrait;
+    use \App\Traits\BlocageTrait;
 
     /**
      * @OA\Get(
@@ -149,6 +152,97 @@ class CompteController extends Controller
     public function bloquerByNumero(BlocageCompteRequest $request, $numero)
     {
         return $this->bloquer($request, $numero);
+    }
+
+    /**
+     * New API: bloquer using motif/duree/unite payload and immediate application when applicable.
+    *
+    * @OA\Post(
+    *     path="/api/v1/comptes/{compte}/bloquer-v2",
+    *     summary="Bloquer un compte (motif + durée)",
+    *     tags={"Comptes"},
+    *     @OA\Parameter(name="compte", in="path", required=true, @OA\Schema(type="string")),
+    *     @OA\RequestBody(
+    *         required=true,
+    *         @OA\JsonContent(
+    *             required={"motif","duree","unite"},
+    *             @OA\Property(property="motif", type="string", example="Suspicion de fraude"),
+    *             @OA\Property(property="duree", type="integer", example=30),
+    *             @OA\Property(property="unite", type="string", example="jours", description="jours|mois|annees")
+    *         )
+    *     ),
+    *     @OA\Response(response=200, description="Compte bloqué / données renvoyées")
+    * )
+     */
+    public function bloquerV2(BlocageRequest $request, $compteIdentifier)
+    {
+        $compte = null;
+        if (is_numeric($compteIdentifier)) {
+            $compte = Compte::find($compteIdentifier);
+        }
+
+        if (! $compte) {
+            $compte = Compte::where('numero_compte', $compteIdentifier)->first();
+        }
+
+        if (! $compte) {
+            return $this->notFoundResponse('Compte introuvable');
+        }
+
+        try {
+            $motif = $request->input('motif');
+            $duree = (int) $request->input('duree');
+            $unite = $request->input('unite');
+
+            $compte = $this->applyBlocage($compte, $motif, $duree, $unite, $request->user()->id ?? 'api');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 400);
+        }
+
+        return $this->successResponse(new CompteResource($compte), 'Compte bloqué avec succès');
+    }
+
+    /**
+     * Debloquer an account (manual endpoint).
+    *
+    * @OA\Post(
+    *     path="/api/v1/comptes/{compte}/debloquer",
+    *     summary="Débloquer un compte (motif)",
+    *     tags={"Comptes"},
+    *     @OA\Parameter(name="compte", in="path", required=true, @OA\Schema(type="string")),
+    *     @OA\RequestBody(
+    *         required=true,
+    *         @OA\JsonContent(
+    *             required={"motif"},
+    *             @OA\Property(property="motif", type="string", example="Contrôle terminé")
+    *         )
+    *     ),
+    *     @OA\Response(response=200, description="Compte débloqué / données renvoyées")
+    * )
+     */
+    public function debloquer(DeblocageRequest $request, $compteIdentifier)
+    {
+        $compte = null;
+        if (is_numeric($compteIdentifier)) {
+            $compte = Compte::find($compteIdentifier);
+        }
+
+        if (! $compte) {
+            $compte = Compte::where('numero_compte', $compteIdentifier)->first();
+        }
+
+        if (! $compte) {
+            return $this->notFoundResponse('Compte introuvable');
+        }
+
+        try {
+            $motif = $request->input('motif');
+            $compte = $this->applyDeblocage($compte, $motif, $request->user()->id ?? 'api');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 400);
+        }
+
+        return $this->successResponse(new CompteResource($compte), 'Compte débloqué avec succès');
     }
 
     /**

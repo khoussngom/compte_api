@@ -3,11 +3,12 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Traits\Validators\ValidationTrait;
 
 class AccountStoreRequest extends FormRequest
 {
+    use ValidationTrait;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -23,24 +24,8 @@ class AccountStoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'type' => 'required|string|in:cheque,epargne',
-            'soldeInitial' => 'required|numeric|min:10000',
-            'devise' => 'required|string|in:FCFA,XOF',
-            'solde' => 'required|numeric|min:0',
-            'client' => 'required|array',
-            'client.id' => 'nullable|integer|exists:clients,id',
-            'client.titulaire' => 'required|string|max:255',
-            'client.nci' => 'required|string|max:50',
-            'client.email' => 'required|email|unique:users,email',
-            'client.telephone' => [
-                'required',
-                'string',
-                'unique:users,telephone',
-                'regex:/^\+221(77|78|70|76|75)[0-9]{7}$/',
-            ],
-            'client.adresse' => 'required|string|max:255',
-        ];
+        // Validation handled by ValidationTrait in passedValidation().
+        return [];
     }
 
     public function messages(): array
@@ -63,15 +48,11 @@ class AccountStoreRequest extends FormRequest
         ];
     }
 
-    protected function failedValidation(Validator $validator)
+    protected function passedValidation()
     {
-        throw new HttpResponseException(response()->json([
-            'success' => false,
-            'error' => [
-                'code' => 'VALIDATION_ERROR',
-                'message' => 'Les données fournies sont invalides',
-                'details' => $validator->errors()->toArray(),
-            ],
-        ], 400));
+        $errors = $this->validateAccountStorePayload($this->all());
+        if (!empty($errors)) {
+            throw new HttpResponseException(response()->json(['success' => false, 'errors' => $errors], 400));
+        }
     }
 }

@@ -2,15 +2,17 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use App\Models\Compte;
+use App\Traits\Validators\ValidationTrait;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class UpdateCompteRequest extends FormRequest
 {
+    use ValidationTrait;
     public function authorize()
     {
-        return true; // public endpoint, no auth required
+        return true;
     }
 
     protected function getClientId()
@@ -28,39 +30,20 @@ class UpdateCompteRequest extends FormRequest
 
     public function rules(): array
     {
-        $clientId = $this->getClientId();
-
-        return [
-            'titulaire' => ['sometimes', 'string', 'max:255'],
-            'informationsClient.telephone' => [
-                'sometimes',
-                'nullable',
-                'regex:/^\+221(77|78|70|76|75)[0-9]{7}$/',
-                // users table holds the principal telephone column in this schema
-                $clientId ? Rule::unique('users', 'telephone')->ignore($clientId) : Rule::unique('users', 'telephone')
-            ],
-            'informationsClient.email' => [
-                'sometimes',
-                'nullable',
-                'email',
-                $clientId ? Rule::unique('users', 'email')->ignore($clientId) : Rule::unique('users', 'email')
-            ],
-            'informationsClient.password' => ['sometimes', 'nullable', 'min:8'],
-            'informationsClient.nci' => ['sometimes', 'nullable', 'regex:/^[12][0-9]{12}$/'],
-        ];
+        return [];
     }
 
     public function withValidator($validator)
     {
-        $validator->after(function ($validator) {
-            $hasTitulaire = $this->filled('titulaire');
-            $hasClient = $this->filled('informationsClient') && is_array($this->input('informationsClient')) && count(array_filter($this->input('informationsClient'), function ($v) {
-                return $v !== null && $v !== '';
-            })) > 0;
 
-            if (!$hasTitulaire && !$hasClient) {
-                $validator->errors()->add('update', 'Au moins un champ doit être fourni pour la mise à jour.');
-            }
-        });
+    }
+
+    protected function passedValidation()
+    {
+        $clientId = $this->getClientId();
+        $errors = $this->validateUpdateComptePayload($this->all(), $clientId);
+        if (!empty($errors)) {
+            throw new HttpResponseException(response()->json(['success' => false, 'errors' => $errors], 400));
+        }
     }
 }

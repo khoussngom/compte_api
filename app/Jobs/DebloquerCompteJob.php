@@ -1,4 +1,41 @@
 <?php
+namespace App\Jobs;
+
+use App\Models\Compte;
+use App\Traits\BlocageTrait;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+
+class DebloquerCompteJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, BlocageTrait;
+
+    /**
+     * Execute the job.
+     * Find comptes whose block end date has passed and deblock them.
+     */
+    public function handle()
+    {
+        $now = now();
+        $comptes = Compte::where('statut_compte', 'bloque')
+            ->whereNotNull('date_fin_blocage')
+            ->where('date_fin_blocage', '<=', $now)
+            ->get();
+
+        foreach ($comptes as $compte) {
+            try {
+                $this->applyDeblocage($compte, 'Déblocage automatique programmé', 'scheduler');
+            } catch (\Exception $e) {
+                Log::channel('comptes')->error('Erreur lors du déblocage automatique', ['compte_id' => $compte->id, 'error' => $e->getMessage()]);
+            }
+        }
+    }
+}
+<?php
 
 namespace App\Jobs;
 

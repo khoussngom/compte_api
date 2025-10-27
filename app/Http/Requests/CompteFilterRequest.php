@@ -3,9 +3,13 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Traits\Validators\ValidationTrait;
 
 class CompteFilterRequest extends FormRequest
 {
+    use ValidationTrait;
+
     public function authorize()
     {
         return true;
@@ -13,16 +17,8 @@ class CompteFilterRequest extends FormRequest
 
     public function rules()
     {
-        return [
-            // accept both accented and ASCII variants (e.g. épargne and epargne)
-            'type' => 'nullable|string|in:épargne,epargne,courant,professionnel',
-            'statut' => 'nullable|string|in:actif,inactif,bloque,bloqué',
-            'search' => 'nullable|string|max:100',
-            'sort' => 'nullable|string|in:date_creation,solde,titulaire_compte',
-            'order' => 'nullable|string|in:asc,desc',
-            'limit' => 'nullable|integer|min:1|max:100',
-            'page' => 'nullable|integer|min:1',
-        ];
+        // handled by ValidationTrait in passedValidation
+        return [];
     }
 
     public function messages()
@@ -34,5 +30,13 @@ class CompteFilterRequest extends FormRequest
             'order.in' => 'L’ordre de tri doit être asc ou desc.',
             'limit.max' => 'La pagination ne peut dépasser 100 éléments.',
         ];
+    }
+
+    protected function passedValidation()
+    {
+        $errors = $this->validateFilterPayload($this->all());
+        if (!empty($errors)) {
+            throw new HttpResponseException(response()->json(['success' => false, 'errors' => $errors], 400));
+        }
     }
 }

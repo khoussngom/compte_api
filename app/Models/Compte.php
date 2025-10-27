@@ -31,6 +31,7 @@ class Compte extends Model
         'date_debut_blocage',
         'date_fin_blocage',
         'motif_blocage',
+    'date_deblocage',
         'version',
         'user_id',
         'client_id',
@@ -43,9 +44,10 @@ class Compte extends Model
     ];
 
     protected $casts = [
-        'date_creation' => 'date',
-        'date_debut_blocage' => 'date',
-        'date_fin_blocage' => 'date',
+        'date_creation' => 'datetime',
+        'date_debut_blocage' => 'datetime',
+        'date_fin_blocage' => 'datetime',
+        'date_deblocage' => 'datetime',
         'archived' => 'boolean',
         'date_fermeture' => 'datetime',
         'solde' => 'decimal:2',

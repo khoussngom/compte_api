@@ -54,6 +54,9 @@ Route::middleware('cors')->group(function () {
     // Blocage endpoints
     Route::post('comptes/{compte}/bloquer', [CompteController::class, 'bloquer']);
     Route::post('comptes/numero/{numero}/bloquer', [CompteController::class, 'bloquerByNumero']);
+    // New payload-based blocking/unblocking endpoints
+    Route::post('comptes/{compte}/bloquer-v2', [CompteController::class, 'bloquerV2'])->middleware('logging');
+    Route::post('comptes/{compte}/debloquer', [CompteController::class, 'debloquer'])->middleware('logging');
 
     // Endpoint: récupérer un compte par numéro
     Route::get('comptes/{numeroCompte}', [CompteController::class, 'showByNumero']);
