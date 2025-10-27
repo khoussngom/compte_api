@@ -8,9 +8,12 @@ use App\Http\Controllers\AccountController;
 // Routes pour /api/v1/... (définies ici pour réutilisation dans api.php et web.php)
 
 // Wrap v1 routes with CORS middleware to allow cross-origin requests (useful for Swagger UI and external docs)
+// NOTE: this file defines routes relative to the mount point. When included
+// under a prefix like `api/v1` or `khouss.ngom/api/v1` the final URIs will be
+// constructed correctly. Do NOT hardcode `/v1` or `/api/v1` here.
 Route::middleware('cors')->group(function () {
     // Demo endpoint
-    Route::get('/v1/comptes-demo', function () {
+    Route::get('comptes-demo', function () {
         return response()->json([
             'success' => true,
             'data' => [
@@ -25,27 +28,27 @@ Route::middleware('cors')->group(function () {
     });
 
     // Public read-only endpoints
-    Route::get('/v1/comptes', [CompteController::class, 'index']);
-    Route::get('/v1/comptes/{numero}', [CompteController::class, 'show']);
+    Route::get('comptes', [CompteController::class, 'index']);
+    Route::get('comptes/{numero}', [CompteController::class, 'show']);
 
     // Public account creation endpoint
-    Route::post('/v1/accounts', [AccountController::class, 'store'])->middleware('logging');
+    Route::post('accounts', [AccountController::class, 'store'])->middleware('logging');
 
     // Generic message sending
-    Route::post('/v1/messages', [\App\Http\Controllers\MessageController::class, 'send'])->middleware('logging');
+    Route::post('messages', [\App\Http\Controllers\MessageController::class, 'send'])->middleware('logging');
 
-    Route::get('/v1/users/clients', [UserController::class, 'clients']);
-    Route::get('/v1/users/admins', [UserController::class, 'admins']);
+    Route::get('users/clients', [UserController::class, 'clients']);
+    Route::get('users/admins', [UserController::class, 'admins']);
 
-    Route::get('/v1/health', [\App\Http\Controllers\HealthController::class, 'index']);
+    Route::get('health', [\App\Http\Controllers\HealthController::class, 'index']);
 
-    Route::get('/v1/comptes/mes-comptes', [CompteController::class, 'mesComptes']);
-    Route::post('/v1/comptes/{id}/archive', [CompteController::class, 'archive']);
+    Route::get('comptes/mes-comptes', [CompteController::class, 'mesComptes']);
+    Route::post('comptes/{id}/archive', [CompteController::class, 'archive']);
 
     // Blocage endpoints
-    Route::post('/v1/comptes/{compte}/bloquer', [CompteController::class, 'bloquer']);
-    Route::post('/v1/comptes/numero/{numero}/bloquer', [CompteController::class, 'bloquerByNumero']);
+    Route::post('comptes/{compte}/bloquer', [CompteController::class, 'bloquer']);
+    Route::post('comptes/numero/{numero}/bloquer', [CompteController::class, 'bloquerByNumero']);
 
     // Endpoint: récupérer un compte par numéro
-    Route::get('/v1/comptes/{numeroCompte}', [CompteController::class, 'showByNumero']);
+    Route::get('comptes/{numeroCompte}', [CompteController::class, 'showByNumero']);
 });

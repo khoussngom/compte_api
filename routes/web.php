@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Mount the API v1 routes for local testing under /khouss.ngom/api/v1/...
-Route::prefix('khouss.ngom/api')->group(function () {
+Route::prefix('khouss.ngom/api/v1')->group(function () {
     require __DIR__ . '/v1_routes.php';
 });
 
