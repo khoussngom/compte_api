@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Compte;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\BlocageCompteRequest;
-use Illuminate\Support\Facades\Log;
+use App\Traits\ApiQueryTrait;
 use Illuminate\Support\Carbon;
 use App\Traits\ApiResponseTrait;
-use App\Traits\ApiQueryTrait;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\CompteFilterRequest;
+use App\Http\Requests\BlocageCompteRequest;
+use App\Services\CompteLookupService;
+use App\Http\Resources\CompteResource;
+use App\Exceptions\CompteNotFoundException;
 
 class CompteController extends Controller
 {
@@ -107,14 +110,12 @@ class CompteController extends Controller
      */
     public function bloquer(BlocageCompteRequest $request, $compteIdentifier)
     {
-        // Resolve compte by id or numero
         $compte = null;
         if (is_numeric($compteIdentifier)) {
             $compte = Compte::find($compteIdentifier);
         }
 
         if (!$compte) {
-            // try by numero
             $compte = Compte::where('numero_compte', $compteIdentifier)->first();
         }
 
@@ -122,23 +123,19 @@ class CompteController extends Controller
             return $this->notFoundResponse('Compte introuvable');
         }
 
-        // mettre à jour les champs de blocage
         $compte->date_debut_blocage = $request->input('date_debut_blocage');
         $compte->date_fin_blocage = $request->input('date_fin_blocage');
         $compte->motif_blocage = $request->input('motif_blocage');
 
-        // Optionnel: si la période inclut aujourd'hui, appliquer le blocage immédiatement
         try {
             $start = Carbon::parse($compte->date_debut_blocage)->startOfDay();
             $end = Carbon::parse($compte->date_fin_blocage)->endOfDay();
             if (Carbon::now()->between($start, $end)) {
                 $compte->statut_compte = 'bloqué';
-                // archive transactions immediately
                 $compte->transactions()->update(['archived' => true]);
                 Log::info('Compte bloqué immédiatement via endpoint', ['compte_id' => $compte->id]);
             }
         } catch (\Exception $e) {
-            // ignore parse errors; dates are validated by the request
         }
 
         $compte->save();
@@ -146,11 +143,24 @@ class CompteController extends Controller
         return $this->successResponse($compte, 'Données de blocage enregistrées');
     }
 
-    /**
-     * Explicit handler for blocking by account number path param.
-     */
+
     public function bloquerByNumero(BlocageCompteRequest $request, $numero)
     {
         return $this->bloquer($request, $numero);
+    }
+
+    /**
+     * Récupère un compte par son numéro.
+     */
+    public function showByNumero($numeroCompte, CompteLookupService $service)
+    {
+        $compte = $service->findByNumero($numeroCompte);
+
+        if (! $compte) {
+            throw new CompteNotFoundException($numeroCompte);
+        }
+
+        $resource = new CompteResource($compte);
+        return $this->successResponse($resource->toArray(request()), 'Détail du compte récupéré');
     }
 }

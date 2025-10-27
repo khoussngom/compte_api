@@ -5,40 +5,20 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompteController;
 use App\Http\Controllers\AccountController;
 
+// Register v1 routes via a closure and mount both under the production
+// domain (API_HOST) and locally. routes/api.php is already served under the
+// /api prefix by Laravel, so we register routes under /api/v1/...
+// Use shared v1 routes so we can mount them in multiple places (domain + local prefix)
+// The actual route definitions live in routes/v1_routes.php
+// Note: routes defined there use the full paths starting with /api/v1/...
 
+// Mount under production domain
 Route::domain(env('API_HOST', 'khouss.ngom'))->group(function () {
-
-    Route::get('/comptes-demo', function () {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                [
-                    'id' => 1,
-                    'numero' => 'CPT-0001',
-                    'solde' => '1000.00',
-                    'type' => 'courant'
-                ]
-            ]
-        ]);
-    });
-
-    Route::get('/comptes', [CompteController::class, 'index']);
-    Route::get('/comptes/{numero}', [CompteController::class, 'show']);
-
-    Route::post('/accounts', [AccountController::class, 'store'])->middleware('logging');
-
-    Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'send'])->middleware('logging');
-
-    Route::get('/users/clients', [UserController::class, 'clients']);
-    Route::get('/users/admins', [UserController::class, 'admins']);
-
-    Route::get('/health', [\App\Http\Controllers\HealthController::class, 'index']);
-
-    Route::get('/comptes/mes-comptes', [CompteController::class, 'mesComptes']);
-    Route::post('/comptes/{id}/archive', [CompteController::class, 'archive']);
-
-    Route::post('/v1/comptes/{compte}/bloquer', [CompteController::class, 'bloquer']);
-    Route::post('/v1/comptes/numero/{numero}/bloquer', [CompteController::class, 'bloquerByNumero']);
-
+    require __DIR__ . '/v1_routes.php';
 });
+
+// Note: for local testing we mount the v1 routes without the automatic
+// /api prefix (see routes/web.php) so the URL http://localhost:8000/khouss.ngom/api/v1/...
+// will work. Do not duplicate the local prefix here because routes in
+// routes/api.php are automatically prefixed with /api by RouteServiceProvider.
 
