@@ -9,7 +9,7 @@ use App\Traits\ApiQueryTrait;
 use Illuminate\Support\Carbon;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\DB;
-use App\Jobs\MoveCompteToBufferJobOOLEAN;
+use App\Jobs\MoveCompteToBufferJob;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BlocageRequest;
@@ -170,6 +170,12 @@ class CompteController extends Controller
 
         if (!$compte) {
             return $this->notFoundResponse('Compte introuvable');
+        }
+
+        // Only allow blocking for savings accounts on legacy endpoint as well
+        $type = strtolower(trim((string) ($compte->type_compte ?? $compte->type ?? '')));
+        if ($type !== 'epargne') {
+            return $this->errorResponse('Seuls les comptes de type epargne peuvent être bloqués.', 400);
         }
 
         $compte->date_debut_blocage = $request->input('date_debut_blocage');

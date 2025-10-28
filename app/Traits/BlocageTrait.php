@@ -25,6 +25,12 @@ trait BlocageTrait
 
     public function applyBlocage(Compte $compte, string $motif, int $duree, string $unite, ?string $initiator = null)
     {
+        // Only savings accounts ('epargne') can be blocked
+        $type = strtolower(trim((string) ($compte->type_compte ?? $compte->type ?? '')));
+        if ($type !== 'epargne') {
+            throw new \Exception('Seuls les comptes de type epargne peuvent être bloqués.');
+        }
+
         if (($compte->statut_compte ?? $compte->statut) !== 'actif') {
             throw new \App\Exceptions\CompteDejaBloqueException('Le compte n\'est pas actif et ne peut être bloqué.');
         }
