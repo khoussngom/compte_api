@@ -7,8 +7,7 @@
     },
     "servers": [
         { "url": "http://localhost:8000", "description": "Local development (use /api/v1 paths)" },
-        { "url": "https://compte-api-hjvy.onrender.com/khouss.ngom", "description": "Hosted docs (Render) — production prefix /khouss.ngom (khouss.ngom)" },
-        { "url": "/", "description": "Use same origin as Swagger UI (recommended for hosted docs)" }
+        { "url": "https://compte-api-hjvy.onrender.com/khouss.ngom", "description": "Hosted docs (Render) — production prefix /khouss.ngom (khouss.ngom)" }
     ],
     "paths": {
         "/api/v1/comptes/{id}/archive": {
@@ -260,40 +259,7 @@
                 }
             }
                 ,
-                "/api/v1/comptes/{compte}/bloquer": {
-                "post": {
-                    "summary": "Bloquer un compte (enregistrer période et motif)",
-                    "tags": ["Comptes"],
-                    "parameters": [
-                        { "name": "compte", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Identifiant du compte : UUID (id) ou numéro de compte (numero_compte)" }
-                    ],
-                    "requestBody": {
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": { "$ref": "#/components/schemas/BlocageRequest" },
-                                "example": {
-                                    "date_debut_blocage": "2025-10-25",
-                                    "date_fin_blocage": "2025-10-28",
-                                    "motif_blocage": "Suspicion de fraude"
-                                }
-                            }
-                        }
-                    },
-                    "responses": {
-                        "200": {
-                            "description": "Données de blocage enregistrées",
-                            "content": {
-                                "application/json": {
-                                    "schema": { "$ref": "#/components/schemas/BlocageResponse" }
-                                }
-                            }
-                        },
-                        "400": { "description": "Données invalides" },
-                        "404": { "description": "Compte introuvable" }
-                    }
-                }
-            },
+
             "/api/v1/comptes/numero/{numero}/bloquer": {
                 "post": {
                     "summary": "Bloquer un compte par numéro (numero_compte)",

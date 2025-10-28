@@ -315,6 +315,11 @@ class CompteController extends Controller
             return $this->notFoundResponse('Compte introuvable');
         }
 
+        $type = strtolower(trim((string) ($compte->type_compte ?? $compte->type ?? '')));
+        if ($type === 'cheque' || $type === 'courant') {
+            return $this->errorResponse('Les comptes de type cheque ne peuvent pas être débloqués via cette API.', 400);
+        }
+
         try {
             $motif = $request->input('motif');
             $compte = $this->applyDeblocage($compte, $motif, $request->user()->id ?? 'api');

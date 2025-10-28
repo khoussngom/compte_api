@@ -51,6 +51,13 @@ trait BlocageTrait
 
     public function applyDeblocage(Compte $compte, string $motif, ?string $initiator = null)
     {
+        // Prevent debloquage for cheque accounts — business rule: cheques cannot be
+        // blocked or unblocked via the API.
+        $type = strtolower(trim((string) ($compte->type_compte ?? $compte->type ?? '')));
+        if ($type === 'cheque' || $type === 'courant') {
+            throw new \Exception('Les comptes de type cheque ne peuvent pas être débloqués via cette API.');
+        }
+
         if (($compte->statut_compte ?? $compte->statut) !== 'bloque') {
             throw new \App\Exceptions\CompteNotBloqueException('Le compte n\'est pas bloqué.');
         }
