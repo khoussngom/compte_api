@@ -22,16 +22,33 @@ class UpdateCompteRequest extends FormRequest
         if (!$ident) {
             return null;
         }
-        $compte = Compte::where('id', $ident)
-            ->orWhere('numero_compte', $ident)
-            ->with('user')
-            ->first();
+        // Avoid querying the UUID primary key with a non-UUID string which
+        // causes Postgres errors. Resolve by id only when the identifier
+        // matches a UUID pattern; otherwise resolve by numero_compte.
+        $compte = null;
+        if (preg_match('/^[0-9a-fA-F-]{36}$/', (string) $ident)) {
+            $compte = Compte::where('id', $ident)->with('user')->first();
+        }
+
+        if (! $compte) {
+            $compte = Compte::where('numero_compte', $ident)->with('user')->first();
+        }
         return $compte && $compte->user ? $compte->user->id : null;
     }
 
     public function rules(): array
     {
-        return [];
+        // Allow partial updates: any field may be omitted. Use "sometimes" so that
+        // only present fields are validated and returned by validated(). This
+        // ensures the controller receives only the submitted fields to persist.
+        return [
+            'titulaire' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'informationsClient' => ['sometimes', 'nullable', 'array'],
+            'informationsClient.telephone' => ['sometimes', 'nullable', 'string'],
+            'informationsClient.email' => ['sometimes', 'nullable', 'email'],
+            'informationsClient.password' => ['sometimes', 'nullable', 'string', 'min:8'],
+            'informationsClient.nci' => ['sometimes', 'nullable', 'string'],
+        ];
     }
 
     public function withValidator($validator)

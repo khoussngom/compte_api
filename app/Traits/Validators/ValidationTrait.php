@@ -61,7 +61,16 @@ trait ValidationTrait
         return $errors;
     }
 
-    public function validateUpdateComptePayload(array $data, ?int $clientId = null): array
+    /**
+     * Validate payload for compte update.
+     * $clientId may come as int or string (depending on lookup). Accept any and
+     * use it only when numeric to avoid TypeError and invalid UUID casts.
+     *
+     * @param array $data
+     * @param mixed $clientId
+     * @return array
+     */
+    public function validateUpdateComptePayload(array $data, $clientId = null): array
     {
         $errors = [];
 
@@ -89,8 +98,9 @@ trait ValidationTrait
                 } else {
                     // uniqueness check against users table
                     $query = User::where('telephone', $c['telephone']);
-                    if ($clientId) {
-                        $query->where('id', '!=', $clientId);
+                    // Only apply client id exclusion when we have a numeric id.
+                    if (!is_null($clientId) && is_numeric($clientId)) {
+                        $query->where('id', '!=', (int) $clientId);
                     }
                     if ($query->exists()) {
                         $errors['informationsClient.telephone'] = 'Le numéro de téléphone est déjà utilisé.';
@@ -103,8 +113,8 @@ trait ValidationTrait
                     $errors['informationsClient.email'] = 'Adresse email invalide.';
                 } else {
                     $query = User::where('email', $c['email']);
-                    if ($clientId) {
-                        $query->where('id', '!=', $clientId);
+                    if (!is_null($clientId) && is_numeric($clientId)) {
+                        $query->where('id', '!=', (int) $clientId);
                     }
                     if ($query->exists()) {
                         $errors['informationsClient.email'] = 'L\'email est déjà utilisé.';

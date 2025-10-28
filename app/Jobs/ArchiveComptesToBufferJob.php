@@ -32,10 +32,15 @@ class ArchiveComptesToBufferJob implements ShouldQueue
     $query = Compte::withoutGlobalScope('non_archived');
 
         if ($this->identifier) {
-            $query->where(function ($q) {
-                $q->where('id', $this->identifier)
-                  ->orWhere('numero_compte', $this->identifier);
-            });
+            // Avoid querying the UUID `id` column with a non-UUID value which causes
+            // a Postgres invalid input syntax for type uuid (SQLSTATE[22P02]).
+            // Detect whether the identifier looks like a UUID and query the proper column.
+            $identifier = $this->identifier;
+            if (preg_match('/^[0-9a-fA-F\-]{36}$/', $identifier)) {
+                $query->where('id', $identifier);
+            } else {
+                $query->where('numero_compte', $identifier);
+            }
         } else {
             $query->where('archived', true)
                   ->orWhere('statut_compte', 'ferme');

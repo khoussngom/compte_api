@@ -346,8 +346,13 @@ class CompteController extends Controller
 
     public function update(UpdateCompteRequest $request, $identifiant)
     {
-        $compte = Compte::find($identifiant);
-        if (!$compte) {
+        $compte = null;
+        // If the identifier looks like a UUID, resolve by id; otherwise resolve by numero_compte.
+        if (preg_match('/^[0-9a-fA-F-]{36}$/', (string) $identifiant)) {
+            $compte = Compte::find($identifiant);
+        }
+
+        if (! $compte) {
             $compte = Compte::where('numero_compte', $identifiant)->first();
         }
 

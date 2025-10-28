@@ -119,6 +119,18 @@ class Compte extends Model
     }
 
     /**
+     * Backwards-compatible alias so callers can eager-load 'client' using
+     * ->with('client') or ->fresh('client'). Some code expects a relation
+     * named `client` while this model previously used `clientRelation` +
+     * an accessor. Provide an actual relation method to avoid eager-load
+     * errors (addEagerConstraints on Builder).
+     */
+    public function client()
+    {
+        return $this->clientRelation();
+    }
+
+    /**
      * The primary user owning this compte (user_id FK).
      */
     public function user()
