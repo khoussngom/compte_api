@@ -39,7 +39,6 @@ class Compte extends Model
         'is_admin_managed',
         'solde',
         'archived',
-        // soft delete / fermeture
         'date_fermeture',
     ];
 
@@ -118,21 +117,13 @@ class Compte extends Model
         return $this->clientRelation()->getResults();
     }
 
-    /**
-     * Backwards-compatible alias so callers can eager-load 'client' using
-     * ->with('client') or ->fresh('client'). Some code expects a relation
-     * named `client` while this model previously used `clientRelation` +
-     * an accessor. Provide an actual relation method to avoid eager-load
-     * errors (addEagerConstraints on Builder).
-     */
+
     public function client()
     {
         return $this->clientRelation();
     }
 
-    /**
-     * The primary user owning this compte (user_id FK).
-     */
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

@@ -4,21 +4,19 @@ namespace App\Jobs;
 
 use App\Models\Compte;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use const FILTER_VALIDATE_BOOLEAN;
-use const FILTER_NULL_ON_FAILURE;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 
 class MoveCompteToBufferJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected string $compteId;
-    protected string $context; // 'archive'|'bloquer'
+    protected string $context;
 
     public function __construct(string $compteId, string $context = 'archive')
     {
@@ -29,7 +27,6 @@ class MoveCompteToBufferJob implements ShouldQueue
     public function handle()
     {
         try {
-            // load even if global scopes hide it
             $compte = Compte::withoutGlobalScope('non_archived')->find($this->compteId);
             if (! $compte) {
                 Log::channel('comptes')->warning('MoveCompteToBufferJob: compte introuvable', ['id' => $this->compteId]);
@@ -46,7 +43,6 @@ class MoveCompteToBufferJob implements ShouldQueue
 
             $where = !empty($data['id']) ? ['id' => $data['id']] : ['numero_compte' => $data['numero_compte']];
 
-            // Normalize boolean casts from the model so Postgres boolean columns receive proper booleans
             $casts = method_exists($compte, 'getCasts') ? $compte->getCasts() : [];
             $booleanAttrs = [];
             foreach ($casts as $attr => $castType) {
@@ -54,7 +50,6 @@ class MoveCompteToBufferJob implements ShouldQueue
                     $booleanAttrs[] = $attr;
                 }
             }
-            // include known boolean columns that may not be cast on the model
             $booleanAttrs = array_unique(array_merge($booleanAttrs, ['is_admin_managed']));
 
             foreach ($booleanAttrs as $attr) {
@@ -72,7 +67,6 @@ class MoveCompteToBufferJob implements ShouldQueue
                         $norm = (bool) $raw;
                     }
                 }
-                // use Postgres-friendly boolean literal
                 $data[$attr] = $norm ? 't' : 'f';
             }
 
@@ -90,7 +84,6 @@ class MoveCompteToBufferJob implements ShouldQueue
                 Log::channel('comptes')->info('MoveCompteToBufferJob: buffer disabled, skip write', ['id' => $compte->id, 'context' => $this->context]);
             }
 
-            // If context is archive we remove the record from primary DB only when buffer write succeeded
             if ($this->context === 'archive') {
                 if ($inserted) {
                     try {

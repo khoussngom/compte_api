@@ -55,10 +55,7 @@ class CompteController extends Controller
      */
     public function index(CompteFilterRequest $request)
     {
-        // Exclude permanently closed accounts (statut 'ferme') and
-        // exclude savings accounts ('epargne') that are currently blocked.
-        // Blocking is considered active when statut_compte = 'bloqué' OR
-        // when the current date is between date_debut_blocage and date_fin_blocage.
+
         $now = now()->toDateTimeString();
 
         $baseQuery = Compte::query()

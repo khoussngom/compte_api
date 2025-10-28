@@ -5,11 +5,11 @@ namespace App\Jobs;
 use App\Models\Compte;
 use App\Traits\BlocageTrait;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class DebloquerCompteJob implements ShouldQueue
 {
@@ -30,8 +30,6 @@ class DebloquerCompteJob implements ShouldQueue
 
         foreach ($comptes as $compte) {
             try {
-                // Use the centralized deblocage logic in the BlocageTrait which
-                // handles statut changes, date_deblocage, transaction flags and logging.
                 $this->applyDeblocage($compte, 'Déblocage automatique programmé', 'scheduler');
             } catch (\Exception $e) {
                 Log::channel('comptes')->error('Erreur lors du déblocage automatique', ['compte_id' => $compte->id, 'error' => $e->getMessage()]);

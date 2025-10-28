@@ -24,9 +24,7 @@ class VerifierBlocageCompteJob implements ShouldQueue
         $this->debloquerComptesAutomatiquement();
     }
 
-    /**
-     * Débloquer automatiquement les comptes dont la date_fin_blocage est atteinte.
-     */
+
     protected function debloquerComptesAutomatiquement()
     {
         $now = now();
@@ -38,7 +36,6 @@ class VerifierBlocageCompteJob implements ShouldQueue
 
         foreach ($comptes as $compte) {
             try {
-                // Use trait applyDeblocage to log and dispatch restore job
                 $this->applyDeblocage($compte, 'auto-deblocage', 'system');
                 Log::channel('comptes')->info('Compte débloqué automatiquement', ['compte_id' => $compte->id]);
             } catch (\Exception $e) {
