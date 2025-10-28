@@ -70,13 +70,9 @@ class CompteController extends Controller
             );
 
         $comptes = $this->applyQueryFilters($baseQuery, $request);
-        $pagination = [
-            'currentPage' => $comptes->currentPage(),
-            'itemsPerPage' => $comptes->perPage(),
-            'totalItems' => $comptes->total(),
-            'totalPages' => $comptes->lastPage(),
-        ];
-        return $this->paginatedResponse($comptes->items(), $pagination, 'Liste récupérée avec succès');
+        // Pass the paginator itself so the response builder can generate
+        // full HATEOAS links and pagination metadata.
+        return $this->paginatedResponse($comptes->items(), $comptes, 'Liste récupérée avec succès');
     }
 
     /**

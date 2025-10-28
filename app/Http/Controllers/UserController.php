@@ -12,26 +12,12 @@ class UserController extends Controller
     public function clients(Request $request)
     {
         $users = User::whereHas('client')->with('client')->paginate(15);
-        $pagination = [
-            'currentPage' => $users->currentPage(),
-            'itemsPerPage' => $users->perPage(),
-            'totalItems' => $users->total(),
-            'totalPages' => $users->lastPage(),
-        ];
-
-        return $this->paginatedResponse($users->items(), $pagination, 'Clients récupérés');
+        return $this->paginatedResponse($users->items(), $users, 'Clients récupérés');
     }
 
     public function admins(Request $request)
     {
         $users = User::whereHas('admin')->with('admin')->paginate(15);
-        $pagination = [
-            'currentPage' => $users->currentPage(),
-            'itemsPerPage' => $users->perPage(),
-            'totalItems' => $users->total(),
-            'totalPages' => $users->lastPage(),
-        ];
-
-        return $this->paginatedResponse($users->items(), $pagination, 'Admins récupérés');
+        return $this->paginatedResponse($users->items(), $users, 'Admins récupérés');
     }
 }
