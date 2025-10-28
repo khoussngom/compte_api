@@ -55,7 +55,24 @@ class CompteController extends Controller
      */
     public function index(CompteFilterRequest $request)
     {
-        $comptes = $this->applyQueryFilters(Compte::query(), $request);
+        // Exclude permanently closed accounts (statut 'ferme') and
+        // exclude savings accounts ('epargne') that are currently blocked.
+        // Blocking is considered active when statut_compte = 'bloqué' OR
+        // when the current date is between date_debut_blocage and date_fin_blocage.
+        $now = now()->toDateTimeString();
+
+        $baseQuery = Compte::query()
+            ->where(function ($q) {
+                $q->whereNull('statut_compte')
+                  ->orWhere('statut_compte', '<>', 'ferme');
+            })
+
+            ->whereRaw(
+                "NOT ((statut_compte = 'bloqué') OR (date_debut_blocage IS NOT NULL AND date_fin_blocage IS NOT NULL AND date_debut_blocage <= ? AND date_fin_blocage >= ?))",
+                [$now, $now]
+            );
+
+        $comptes = $this->applyQueryFilters($baseQuery, $request);
         $pagination = [
             'currentPage' => $comptes->currentPage(),
             'itemsPerPage' => $comptes->perPage(),
@@ -92,13 +109,15 @@ class CompteController extends Controller
      *     @OA\Response(response=200, description="Détail du compte")
      * )
      */
-    public function show($numero)
+    public function show($numero, CompteLookupService $service)
     {
-        $compte = Compte::numero($numero)->first();
-        if (!$compte) {
+        // Use the lookup service which searches local DB first then neon_buffer.
+        $compte = $service->findByNumero($numero);
+        if (! $compte) {
             return $this->notFoundResponse('Compte introuvable');
         }
-    return $this->respondWithResource($compte, 'Détail du compte récupéré');
+
+        return $this->respondWithResource($compte, 'Détail du compte récupéré');
     }
 
     /**
@@ -172,7 +191,6 @@ class CompteController extends Controller
             return $this->notFoundResponse('Compte introuvable');
         }
 
-        // Only allow blocking for savings accounts on legacy endpoint as well
         $type = strtolower(trim((string) ($compte->type_compte ?? $compte->type ?? '')));
         if ($type !== 'epargne') {
             return $this->errorResponse('Seuls les comptes de type epargne peuvent être bloqués.', 400);

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Compte;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class CompteLookupService
 {
@@ -36,12 +37,29 @@ class CompteLookupService
      */
     private function findInServerless(string $numeroCompte): ?Compte
     {
-        // TODO: Adapter l'appel HTTP client (Guzzle, Http::) vers la base distante.
-        // Exemple simplifié utilisant Http facade (non activé ici) :
-        // $resp = Http::withToken(config('services.serverless.token'))->get(config('services.serverless.url')."/comptes/{$numeroCompte}");
-        // if ($resp->ok()) { return new Compte($resp->json()); }
+        // Attempt to read from the configured neon buffer Postgres connection.
+        try {
+            $row = DB::connection('neon_buffer')->table('comptes')
+                ->where('numero_compte', $numeroCompte)
+                ->first();
 
-        Log::info("Recherche serverless non implémentée pour compte {$numeroCompte}");
-        return null;
+            if (! $row) {
+                Log::info("Compte not found in neon_buffer: {$numeroCompte}");
+                return null;
+            }
+
+            // Map the stdClass row to a Compte model instance for read-only use.
+            $data = (array) $row;
+            $compte = new Compte();
+            // Set raw attributes and mark as existing to avoid inserts on save().
+            $compte->setRawAttributes($data, true);
+            $compte->exists = true;
+
+            // Ensure the model's date casts and attributes are applied on access.
+            return $compte;
+        } catch (\Throwable $e) {
+            Log::error('Erreur recherche neon_buffer: ' . $e->getMessage());
+            return null;
+        }
     }
 }

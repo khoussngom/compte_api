@@ -216,7 +216,10 @@ trait ValidationTrait
     public function validateFilterPayload(array $data): array
     {
         $errors = [];
-        $types = ['épargne','epargne','courant','professionnel'];
+    // Accept both 'cheque' and 'courant' as possible spellings used across the
+    // codebase and persisted data. Keep 'epargne' (accent/without accent)
+    // and 'professionnel' as valid types as well.
+    $types = ['cheque', 'courant', 'épargne', 'epargne', 'professionnel'];
         if (array_key_exists('type', $data) && $data['type'] !== null && !in_array($data['type'], $types, true)) {
             $errors['type'] = 'Le type de compte doit être épargne, courant ou professionnel.';
         }
