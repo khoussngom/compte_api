@@ -134,9 +134,9 @@ class CompteController extends Controller
      */
     public function archive($id)
     {
+        // Resolve compte by UUID id or numero_compte
         $compte = null;
-
-        if (preg_match('/^[0-9a-fA-F-]{36}$/', (string) $id)) {
+        if (preg_match('/^[0-9a-fA-F\-]{36}$/', (string) $id)) {
             $compte = Compte::find($id);
         }
 
@@ -144,12 +144,30 @@ class CompteController extends Controller
             $compte = Compte::where('numero_compte', $id)->first();
         }
 
-        if (!$compte) {
+        if (! $compte) {
             return $this->notFoundResponse('Compte introuvable');
         }
 
+        // Business rule: only savings accounts in an active blocking period
+        // are eligible for archival. Check type and block dates.
+        $type = strtolower((string) ($compte->type_compte ?? $compte->type ?? ''));
+        $now = now();
+        $blockStarted = $compte->date_debut_blocage && $compte->date_debut_blocage <= $now;
+        $blockNotEnded = $compte->date_fin_blocage && $compte->date_fin_blocage > $now;
+        $isBlocked = strtolower((string) ($compte->statut_compte ?? '')) === 'bloqué' || ($blockStarted && $blockNotEnded);
+
+        if ($type !== 'epargne' || ! $isBlocked) {
+            return $this->errorResponse('Seuls les comptes épargne actuellement en période de blocage peuvent être archivés.', 400);
+        }
+
+        // Mark archived and set archive date when eligible
         $compte->archived = true;
-        $compte->statut_compte = $compte->statut_compte ?? 'archive';
+        $compte->statut_compte = 'archive';
+        try {
+            $compte->date_archivage = $now;
+        } catch (\Exception $e) {
+            // ignore if model doesn't have the attribute
+        }
         $compte->save();
 
         try {

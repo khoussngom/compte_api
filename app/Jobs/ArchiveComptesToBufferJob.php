@@ -3,10 +3,9 @@
 namespace App\Jobs;
 
 use App\Models\Compte;
-use FILTER_VALIDATE_BOOLEAN;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\LogOOLEAN;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -39,14 +38,36 @@ class ArchiveComptesToBufferJob implements ShouldQueue
                 $query->where('numero_compte', $identifier);
             }
         } else {
-            $query->where('archived', true)
-                  ->orWhere('statut_compte', 'ferme');
+            // Select only savings accounts ('epargne') that are currently blocked
+            // and whose blocking period has started (date_debut_blocage <= now)
+            // and not yet finished (date_fin_blocage > now()).
+            $now = now();
+            $query->where('type_compte', 'epargne')
+                  ->where('statut_compte', 'bloqué')
+                  ->whereDate('date_debut_blocage', '<=', $now)
+                  ->whereDate('date_fin_blocage', '>', $now);
         }
 
         $comptes = $query->get();
 
         foreach ($comptes as $compte) {
             try {
+
+                // Ensure the compte is marked as archived and has an archive date
+                // before copying to the buffer. This reflects the business rule
+                // that eligible blocked savings accounts are archived when their
+                // blocking period has started.
+                if ((string) ($compte->statut_compte ?? '') !== 'archive') {
+                    $compte->statut_compte = 'archive';
+                    // Set date_archivage when the column exists; setting the
+                    // attribute directly is harmless if it doesn't persist.
+                    try {
+                        $compte->date_archivage = now();
+                    } catch (\Exception $e) {
+                        // ignore if attribute not present
+                    }
+                    $compte->save();
+                }
 
                 $data = $compte->getAttributes();
 
@@ -64,7 +85,7 @@ class ArchiveComptesToBufferJob implements ShouldQueue
                     $where['numero_compte'] = $compte->numero_compte;
                 }
 
-                $bufferEnabled = filter_var(env('NEON_BUFFER_ENABLED', false), FILTER_VALIDATE_BOOLEAN);
+                $bufferEnabled = filter_var(env('NEON_BUFFER_ENABLED', false), \FILTER_VALIDATE_BOOLEAN);
                 if ($bufferEnabled) {
                     try {
                         DB::connection('neon_buffer')->table('comptes')->updateOrInsert($where, $data);
