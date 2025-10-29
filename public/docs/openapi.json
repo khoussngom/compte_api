@@ -7,7 +7,6 @@
     },
     "servers": [
         { "url": "http://localhost:8000", "description": "Local development — server root; use /api/v1/* in paths" },
-        { "url": "https://khouss.ngom", "description": "Production (primary domain)" },
         { "url": "https://compte-api-hjvy.onrender.com", "description": "Hosted docs (Render) — remove legacy prefix" }
     ],
         "paths": {
@@ -312,7 +311,7 @@
                 "post": {
                     "summary": "Authentifier un utilisateur (login)",
                     "tags": ["Auth"],
-                    "description": "Connexion par `activation_code` (première connexion) ou par `password`. En cas de connexion par `activation_code`, le code est consommé et l'utilisateur reçoit un token avec le flag `must_change_password: true`.",
+                    "description": "Connexion par `activation_code` (première connexion) ou par `password`. Si c'est la première connexion, seul le code d'activation est requis (ne pas inclure le champ mot de passe). Exemple pour test admin : `{ \"identifier\": \"admin@gmail.com\", \"password\": \"admin\" }`",
                     "requestBody": {
                         "required": true,
                         "content": {
