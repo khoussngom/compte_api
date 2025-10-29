@@ -167,7 +167,8 @@ trait ValidationTrait
 
         $c = $data['client'];
         if (array_key_exists('id', $c) && !is_null($c['id'])) {
-            if (!is_numeric($c['id']) || !Client::where('id', $c['id'])->exists()) {
+            // Accept UUID or numeric ids; just ensure the client exists.
+            if (!Client::where('id', $c['id'])->exists()) {
                 $errors['client.id'] = 'Client.id invalide.';
             }
         }

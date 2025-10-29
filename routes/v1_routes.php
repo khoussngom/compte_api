@@ -30,12 +30,16 @@ Route::middleware('cors')->group(function () {
 
     Route::get('comptes/{numero}', [CompteController::class, 'show']);
 
+    // Accept POST /api/v1/accounts (primary) and also POST /api/v1/comptes as an alias
+    // to support callers that expect the French resource name.
     Route::post('accounts', [AccountController::class, 'store'])->middleware('logging');
+    Route::post('comptes', [AccountController::class, 'store'])->middleware('logging');
 
     Route::post('messages', [\App\Http\Controllers\MessageController::class, 'send'])->middleware('logging');
 
     Route::get('users/clients', [UserController::class, 'clients']);
     Route::get('users/admins', [UserController::class, 'admins']);
+    Route::get('users/client', [UserController::class, 'findClient']);
 
     Route::get('health', [\App\Http\Controllers\HealthController::class, 'index']);
 

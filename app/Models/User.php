@@ -100,9 +100,15 @@ class User extends Authenticatable
             }
 
             if (! $user->client) {
+                // include more client fields so the Client record contains
+                // the expected contact and identity information (email, telephone, nom/prenom)
                 $clientData = [
                     'id' => (string) Str::uuid(),
                     'user_id' => $user->id,
+                    'nom' => $data['nom'] ?? null,
+                    'prenom' => $data['prenom'] ?? null,
+                    'email' => $data['email'] ?? null,
+                    'telephone' => $data['telephone'] ?? null,
                     'adresse' => $data['adresse'] ?? null,
                     'date_naissance' => $data['date_naissance'] ?? null,
                     'nci' => $data['nci'] ?? null,

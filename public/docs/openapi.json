@@ -6,8 +6,9 @@
         "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
     },
     "servers": [
-        { "url": "http://localhost:8000", "description": "Local development (use /api/v1 paths)" },
-        { "url": "https://compte-api-hjvy.onrender.com/khouss.ngom", "description": "Hosted docs (Render) — production prefix /khouss.ngom (khouss.ngom)" }
+        { "url": "http://localhost:8000/api/v1", "description": "Local development — API root (use /api/v1/*)" },
+        { "url": "https://khouss.ngom/api/v1", "description": "Production (primary domain with /api/v1)" },
+        { "url": "https://compte-api-hjvy.onrender.com/khouss.ngom", "description": "Hosted docs (Render) — production prefix /khouss.ngom (legacy)" }
     ],
     "paths": {
         "/api/v1/comptes/{id}/archive": {
@@ -55,19 +56,11 @@
                     }
                 }
                 }
-            }
             },
-            "/api/v1/comptes-demo": {
-            "get": {
-                "summary": "Endpoint de démonstration public pour la doc",
-                "responses": { "200": { "description": "OK" } }
-            }
-            },
-            "/api/v1/accounts": {
             "post": {
                 "summary": "Créer un compte bancaire avec client",
                 "description": "Crée un utilisateur, un client et un compte bancaire avec validation stricte.",
-                "tags": ["Accounts"],
+                "tags": ["Comptes"],
                 "requestBody": {
                 "required": true,
                 "content": {
@@ -132,6 +125,7 @@
                 }
             }
             },
+
             "/api/v1/users/clients": {
             "get": {
                 "summary": "Lister les utilisateurs qui sont clients",
@@ -155,8 +149,31 @@
                 }
                 }
             }
-            }
-            ,
+            },
+
+            "/api/v1/users/client": {
+                "get": {
+                    "summary": "Trouver un client par telephone ou NCI",
+                    "description": "Renvoie le client correspondant au `telephone` ou au `nci`. Au moins un des deux paramètres est requis.",
+                    "tags": ["Users"],
+                    "parameters": [
+                        { "name": "telephone", "in": "query", "required": false, "schema": { "type": "string", "example": "+221771234567" }, "description": "Numéro de téléphone du client (format international ou local)" },
+                        { "name": "nci", "in": "query", "required": false, "schema": { "type": "string", "example": "1234567890123" }, "description": "Numéro de la carte d'identité (NCI)" }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Client trouvé",
+                            "content": {
+                                "application/json": {
+                                    "schema": { "$ref": "#/components/schemas/ClientWithUserAndComptes" }
+                                }
+                            }
+                        },
+                        "404": { "description": "Client introuvable" },
+                        "422": { "description": "Paramètre manquant ou invalide" }
+                    }
+                }
+            },
             "/api/v1/comptes/{numeroCompte}": {
                 "get": {
                     "summary": "Récupérer un compte par son numéro (Admin ou Client)",
@@ -418,6 +435,26 @@
                         "email": { "type": "string" },
                         "telephone": { "type": "string" },
                         "client": { "type": "object" }
+                    }
+                },
+                "ClientWithUserAndComptes": {
+                    "type": "object",
+                    "properties": {
+                        "success": { "type": "boolean", "example": true },
+                        "data": {
+                            "type": "object",
+                            "properties": {
+                                "id": { "type": "string", "format": "uuid" },
+                                "nom": { "type": "string" },
+                                "prenom": { "type": "string" },
+                                "email": { "type": "string" },
+                                "telephone": { "type": "string" },
+                                "nci": { "type": "string" },
+                                "adresse": { "type": "string" },
+                                "user": { "$ref": "#/components/schemas/UserWithClient" },
+                                "comptes": { "type": "array", "items": { "$ref": "#/components/schemas/Compte" } }
+                            }
+                        }
                     }
                 },
 
