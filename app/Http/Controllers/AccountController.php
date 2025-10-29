@@ -26,6 +26,69 @@ class AccountController extends Controller
         try {
 
             $clientData = $payload['client'];
+            // If no client id provided, attempt to find an existing client by
+            // telephone (normalized), nci or email — if found, create a new compte
+            // for that existing client instead of creating a new user+client.
+            if (empty($clientData['id'])) {
+                $query = \App\Models\Client::query();
+
+                $telephone = $clientData['telephone'] ?? null;
+                $nci = $clientData['nci'] ?? null;
+                $email = $clientData['email'] ?? null;
+
+                if (!empty($telephone)) {
+                    $digits = preg_replace('/\D+/', '', $telephone);
+                    $last9 = $digits !== '' ? (strlen($digits) > 9 ? substr($digits, -9) : $digits) : '';
+
+                    $query->where(function($q) use ($telephone, $last9) {
+                        $q->where('telephone', $telephone)->orWhere('telephone', '+'.$telephone);
+                        if (!empty($last9)) {
+                            if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+                                $q->orWhereRaw("right(regexp_replace(telephone, '\\D', '', 'g'), 9) = ?", [$last9]);
+                            } else {
+                                $q->orWhereRaw(
+                                    "right(replace(replace(replace(replace(replace(replace(replace(replace(telephone, '+', ''), ' ', ''), '-', ''), '.', ''), '(', ''), ')', ''), '/', ''), '\\\\', ''), 9) = ?",
+                                    [$last9]
+                                );
+                            }
+                        }
+                    });
+                } elseif (!empty($nci)) {
+                    $query->where('nci', $nci);
+                } elseif (!empty($email)) {
+                    $query->where('email', $email);
+                }
+
+                $existingClient = $query->with('user')->first();
+                if ($existingClient) {
+                    $compteData = [
+                        'client_id' => $existingClient->id,
+                        'user_id' => $existingClient->user_id ?? null,
+                        'type_compte' => $payload['type'],
+                        'solde' => $payload['soldeInitial'],
+                        'devise' => $payload['devise'],
+                        'statut_compte' => 'actif',
+                        'date_creation' => now(),
+                    ];
+
+                    $compte = Compte::create($compteData);
+
+                    try {
+                        \App\Jobs\SendWelcomeNotificationsJob::dispatch([
+                            'email' => $existingClient->email ?? null,
+                            'telephone' => $existingClient->telephone ?? null,
+                            'numero_compte' => $compte->numero_compte,
+                            'titulaire' => $clientData['titulaire'] ?? null,
+                            'message_sms' => "Votre nouveau compte {$compte->numero_compte} a été créé.",
+                            'body' => "Bonjour %s,\nUn nouveau compte {$compte->numero_compte} a été ajouté à votre profil.\nMerci.",
+                        ]);
+                    } catch (\Throwable $e) {
+                        Log::channel('comptes')->info('SendWelcomeNotificationsJob dispatch failed for existing client', ['error' => $e->getMessage()]);
+                    }
+
+                    return $this->respondWithCompteModel($compte, $clientData['titulaire'], 'Compte créé pour client existant', 201);
+                }
+            }
             // If client.id is provided and the client exists, only create a new Compte
             if (array_key_exists('id', $clientData) && !empty($clientData['id'])) {
                 $existingClient = Client::find($clientData['id']);

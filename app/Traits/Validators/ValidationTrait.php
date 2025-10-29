@@ -183,18 +183,13 @@ trait ValidationTrait
 
         if (empty($c['email']) || ! filter_var($c['email'], \FILTER_VALIDATE_EMAIL)) {
             $errors['client.email'] = 'L\'email est requis et doit être valide.';
-        } else {
-            if (User::where('email', $c['email'])->exists()) {
-                $errors['client.email'] = 'Cet email est déjà utilisé.';
-            }
         }
 
         if (empty($c['telephone']) || ! $this->isValidSenegalPhone($c['telephone'])) {
             $errors['client.telephone'] = 'Le numéro de téléphone est requis et doit être un numéro sénégalais valide.';
         } else {
-            if (User::where('telephone', $c['telephone'])->exists()) {
-                $errors['client.telephone'] = 'Ce numéro de téléphone est déjà utilisé.';
-            }
+            // allow existing telephone for account creation; the controller will
+            // attach a new compte to an existing client when appropriate.
         }
 
         if (empty($c['adresse']) || !is_string($c['adresse'])) {
