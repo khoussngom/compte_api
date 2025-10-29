@@ -14,6 +14,7 @@
         "/api/v1/comptes/{id}/archive": {
             "post": {
                 "summary": "Archiver un compte (marquer comme archived)",
+                "security": [{ "bearerAuth": [] }],
                 "tags": ["Comptes"],
                 "parameters": [
                     { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6" }, "description": "Identifiant du compte : UUID (id) ou numéro de compte (numero_compte)" }
@@ -37,6 +38,7 @@
                 "summary": "Lister tous les comptes",
                 "description": "Récupère une liste paginée de comptes avec possibilité de filtrage et tri",
                 "tags": ["Comptes"],
+                "security": [{ "bearerAuth": [] }],
                 "parameters": [
                     { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Numéro de page" },
                     { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 }, "description": "Nombre d'éléments par page" },
@@ -178,6 +180,7 @@
                 "get": {
                     "summary": "Récupérer un compte par son numéro (Admin ou Client)",
                     "tags": ["Comptes"],
+                    "security": [{ "bearerAuth": [] }],
                     "parameters": [
                         { "name": "numeroCompte", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Numéro de compte (numero_compte)" }
                     ],
@@ -225,7 +228,8 @@
                 "patch": {
                     "summary": "Mettre à jour un compte (par id ou numero)",
                     "tags": ["Comptes"],
-                    "description": "Met à jour les informations d'un compte et du client associé. Tous les champs sont optionnels mais au moins un doit être fourni. Aucune authentification requise.",
+                    "description": "Met à jour les informations d'un compte et du client associé. Tous les champs sont optionnels mais au moins un doit être fourni.",
+                    "security": [{ "bearerAuth": [] }],
                     "parameters": [
                         { "name": "identifiant", "in": "path", "required": true, "schema": { "type": "string" }, "description": "ID (UUID) ou numéro du compte (numero_compte)" }
                     ],
@@ -281,6 +285,7 @@
                 "post": {
                     "summary": "Bloquer un compte par numéro (numero_compte)",
                     "tags": ["Comptes"],
+                    "security": [{ "bearerAuth": [] }],
                     "parameters": [
                         { "name": "numero", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Numéro de compte (numero_compte)" }
                     ],
@@ -304,8 +309,87 @@
                     }
                 }
             }
+            ,
+
+            "/api/v1/login": {
+                "post": {
+                    "summary": "Authentifier un utilisateur (login)",
+                    "tags": ["Auth"],
+                    "description": "Connexion par `activation_code` (première connexion) ou par `password`. En cas de connexion par `activation_code`, le code est consommé et l'utilisateur reçoit un token avec le flag `must_change_password: true`.",
+                    "requestBody": {
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "identifier": { "type": "string", "description": "Email, telephone ou nci" },
+                                        "activation_code": { "type": "string", "description": "Code d'activation pour première connexion" },
+                                        "password": { "type": "string", "description": "Mot de passe pour connexion normale" }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Connexion réussie",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "access_token": { "type": "string" },
+                                            "token_type": { "type": "string", "example": "Bearer" },
+                                            "expires_in": { "type": "integer" },
+                                            "must_change_password": { "type": "boolean", "description": "true si l'utilisateur doit changer son mot de passe après la connexion (first-login)" }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "401": { "description": "Identifiants invalides" }
+                    }
+                }
+            },
+
+            "/api/v1/clients/change-password": {
+                "post": {
+                    "summary": "Changer le mot de passe (protected)",
+                    "tags": ["Auth"],
+                    "security": [{ "bearerAuth": [] }],
+                    "requestBody": {
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": ["new_password", "new_password_confirmation"],
+                                    "properties": {
+                                        "current_password": { "type": "string", "description": "Requis sauf si force_password_change=true" },
+                                        "new_password": { "type": "string" },
+                                        "new_password_confirmation": { "type": "string" }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": { "description": "Mot de passe mis à jour avec succès" },
+                        "400": { "description": "Données invalides" },
+                        "401": { "description": "Non autorisé" }
+                    }
+                }
+            }
         },
         "components": {
+            "securitySchemes": {
+                "bearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "bearerFormat": "JWT"
+                }
+            },
             "schemas": {
                 "Compte": {
                     "type": "object",
