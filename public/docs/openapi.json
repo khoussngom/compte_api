@@ -10,29 +10,7 @@
         { "url": "https://khouss.ngom", "description": "Production (primary domain)" },
         { "url": "https://compte-api-hjvy.onrender.com", "description": "Hosted docs (Render) — remove legacy prefix" }
     ],
-    "paths": {
-        "/api/v1/comptes/{id}/archive": {
-            "post": {
-                "summary": "Archiver un compte (marquer comme archived)",
-                "security": [{ "bearerAuth": [] }],
-                "tags": ["Comptes"],
-                "parameters": [
-                    { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6" }, "description": "Identifiant du compte : UUID (id) ou numéro de compte (numero_compte)" }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Compte archivé avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": { "$ref": "#/components/schemas/ArchiveResponse" }
-                            }
-                        }
-                    },
-                    "403": { "description": "Accès refusé" },
-                    "404": { "description": "Compte introuvable" }
-                }
-            }
-        },
+        "paths": {
             "/api/v1/comptes": {
             "get": {
                 "summary": "Lister tous les comptes",
@@ -310,6 +288,25 @@
                 }
             }
             ,
+
+            "/api/v1/comptes/{compteId}": {
+                "delete": {
+                    "summary": "Supprimer un compte (par id)",
+                    "tags": ["Comptes"],
+                    "security": [{ "bearerAuth": [] }],
+                    "parameters": [
+                        { "name": "compteId", "in": "path", "required": true, "schema": { "type": "string", "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6" }, "description": "Identifiant UUID du compte à supprimer" }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Compte supprimé avec succès",
+                            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccountDeleteSuccessResponse" } } }
+                        },
+                        "403": { "description": "Accès refusé" },
+                        "404": { "description": "Compte introuvable" }
+                    }
+                }
+            },
 
             "/api/v1/login": {
                 "post": {
