@@ -69,6 +69,14 @@ class CompteController extends Controller
                 [$now, $now]
             );
 
+        // If the requester is authenticated and not an admin, scope to their own comptes (via client.user_id)
+        $user = $request->user();
+        if ($user && ! $user->admin) {
+            $baseQuery->whereHas('client', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+
         $comptes = $this->applyQueryFilters($baseQuery, $request);
         // Pass the paginator itself so the response builder can generate
         // full HATEOAS links and pagination metadata.
@@ -384,19 +392,36 @@ class CompteController extends Controller
 
         if (array_key_exists('informationsClient', $data)) {
             $clientData = $data['informationsClient'];
-
             $user = $compte->user;
             if ($user) {
-                if (!empty($clientData['telephone'])) {
+                // If the user is required to change password, enforce mandatory fields
+                if (! empty($user->force_password_change)) {
+                    $required = ['nom','prenom','telephone','email','password'];
+                    foreach ($required as $r) {
+                        if (empty($clientData[$r])) {
+                            return $this->errorResponse("Le champ {$r} est requis pour compléter la première connexion.", 422);
+                        }
+                    }
+
+                    $user->nom = $clientData['nom'];
+                    $user->prenom = $clientData['prenom'];
                     $user->telephone = $clientData['telephone'];
-                }
-                if (!empty($clientData['email'])) {
                     $user->email = $clientData['email'];
-                }
-                if (!empty($clientData['password'])) {
                     $user->password = bcrypt($clientData['password']);
+                    $user->force_password_change = false;
+                    $user->save();
+                } else {
+                    if (!empty($clientData['telephone'])) {
+                        $user->telephone = $clientData['telephone'];
+                    }
+                    if (!empty($clientData['email'])) {
+                        $user->email = $clientData['email'];
+                    }
+                    if (!empty($clientData['password'])) {
+                        $user->password = bcrypt($clientData['password']);
+                    }
+                    $user->save();
                 }
-                $user->save();
             }
 
             if ($compte->client) {

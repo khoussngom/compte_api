@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Models\Admin;
 use App\Models\Client;
 use App\Models\Compte;
+use Laravel\Passport\HasApiTokens;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +21,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
     use HasUuids;
+    use HasApiTokens;
 
     // Use UUID primary keys for users
     protected $keyType = 'string';
@@ -133,13 +135,12 @@ class User extends Authenticatable
             $compteData = array_merge($compteDefaults, $compteOverrides);
             Compte::create($compteData);
 
-            // Send email (simple example) — include activation code
+            // Send activation code only (do NOT send the generated password)
             if (! empty($user->email)) {
-                Mail::raw("Bienvenue {$user->prenom}, votre mot de passe est : {$passwordPlain}. Votre code d'activation: {$activationCode}", function ($message) use ($user) {
+                Mail::raw("Bienvenue {$user->prenom}, votre code d'activation: {$activationCode}. Utilisez ce code pour vous connecter la première fois et choisissez ensuite un nouveau mot de passe.", function ($message) use ($user) {
                     $message->to($user->email)->subject('Création de votre compte');
                 });
             }
-
 
             if (! empty($user->telephone)) {
                 try {

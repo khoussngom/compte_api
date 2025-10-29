@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'api' => [
+            'driver' => env('API_GUARD_DRIVER', 'passport'),
+            'provider' => 'users',
+        ],
     ],
 
     /*

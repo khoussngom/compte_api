@@ -6,9 +6,9 @@
         "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
     },
     "servers": [
-        { "url": "http://localhost:8000/api/v1", "description": "Local development — API root (use /api/v1/*)" },
-        { "url": "https://khouss.ngom/api/v1", "description": "Production (primary domain with /api/v1)" },
-        { "url": "https://compte-api-hjvy.onrender.com/khouss.ngom", "description": "Hosted docs (Render) — production prefix /khouss.ngom (legacy)" }
+        { "url": "http://localhost:8000", "description": "Local development — server root; use /api/v1/* in paths" },
+        { "url": "https://khouss.ngom", "description": "Production (primary domain)" },
+        { "url": "https://compte-api-hjvy.onrender.com", "description": "Hosted docs (Render) — remove legacy prefix" }
     ],
     "paths": {
         "/api/v1/comptes/{id}/archive": {
