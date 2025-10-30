@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Http\Controllers;
 
 use App\Models\Compte;
 use Illuminate\Support\Facades\DB;

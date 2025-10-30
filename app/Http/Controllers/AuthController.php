@@ -2,17 +2,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /**
-     * POST /api/v1/clients/change-password
-     * - If user has force_password_change = true, current_password is optional.
-     * - Otherwise current_password is required and must match.
-     * Body: { current_password?, new_password, new_password_confirmation }
-     */
+
     public function changePassword(Request $request)
     {
         $user = $request->user();

@@ -2,9 +2,9 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Models\Compte;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Compte;
 
 class AccountAccessMiddleware
 {
@@ -20,13 +20,10 @@ class AccountAccessMiddleware
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // If user is admin, allow
         if ($user->admin) {
             return $next($request);
         }
 
-        // For non-admins (clients) ensure the resource being touched belongs to them.
-        // Try to resolve a compte identifier from common route parameter names.
         $paramNames = ['compte', 'identifiant', 'id', 'numero', 'numeroCompte', 'compteId'];
         $found = null;
         foreach ($paramNames as $p) {
@@ -36,12 +33,10 @@ class AccountAccessMiddleware
             }
         }
 
-        // If no compte identifier present, allow (controller should further scope listings)
         if (! $found) {
             return $next($request);
         }
 
-        // Resolve compte by UUID id or by account number
         $compte = null;
         if (is_string($found) && preg_match('/^[0-9a-fA-F\-]{36}$/', $found)) {
             $compte = Compte::find($found);
@@ -55,7 +50,6 @@ class AccountAccessMiddleware
             return response()->json(['message' => 'Compte introuvable'], 404);
         }
 
-        // Ensure compte's client belongs to authenticated user
         $client = $compte->client;
         if (! $client) {
             return response()->json(['message' => 'Accès refusé'], 403);

@@ -23,7 +23,6 @@ class VerifyCsrfToken extends BaseVerifier
 
     public function __construct()
     {
-        // Only disable CSRF for our local API mount during local development
         if (app()->environment('local')) {
             $this->except = [
                 'khouss.ngom/api/v1/*',

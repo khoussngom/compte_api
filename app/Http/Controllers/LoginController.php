@@ -1,11 +1,11 @@
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
@@ -49,12 +49,23 @@ class LoginController extends Controller
             $user->force_password_change = true;
             $user->save();
 
-            // issue a personal access token
-            $token = $user->createToken('login-token')->accessToken;
+            // issue a personal access token (capture token model to compute expiry)
+            $result = $user->createToken('login-token');
+            $tokenString = $result->accessToken ?? null;
+            $expiresIn = null;
+            try {
+                $tokenModel = $result->token ?? null;
+                if ($tokenModel && isset($tokenModel->expires_at) && $tokenModel->expires_at) {
+                    $expiresIn = $tokenModel->expires_at->diffInSeconds(now());
+                }
+            } catch (\Throwable $_) {
+                $expiresIn = null;
+            }
 
             return response()->json([
-                'access_token' => $token,
+                'access_token' => $tokenString,
                 'token_type' => 'Bearer',
+                'expires_in' => $expiresIn,
                 'must_change_password' => true,
             ], 200);
         }
@@ -65,11 +76,22 @@ class LoginController extends Controller
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
 
-            $token = $user->createToken('login-token')->accessToken;
+            $result = $user->createToken('login-token');
+            $tokenString = $result->accessToken ?? null;
+            $expiresIn = null;
+            try {
+                $tokenModel = $result->token ?? null;
+                if ($tokenModel && isset($tokenModel->expires_at) && $tokenModel->expires_at) {
+                    $expiresIn = $tokenModel->expires_at->diffInSeconds(now());
+                }
+            } catch (\Throwable $_) {
+                $expiresIn = null;
+            }
 
             return response()->json([
-                'access_token' => $token,
+                'access_token' => $tokenString,
                 'token_type' => 'Bearer',
+                'expires_in' => $expiresIn,
                 'must_change_password' => (bool) ($user->force_password_change ?? false),
             ], 200);
         }

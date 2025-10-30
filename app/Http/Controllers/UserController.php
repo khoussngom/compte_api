@@ -1,11 +1,11 @@
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Traits\ApiResponseTrait;
 
 class UserController extends Controller
 {

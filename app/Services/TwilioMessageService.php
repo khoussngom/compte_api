@@ -24,7 +24,6 @@ class TwilioMessageService implements MessageServiceInterface
         try {
             $params = ['body' => $message];
 
-            // If a Messaging Service SID was provided prefer it (MG...)
             if (!empty($this->messagingServiceSid)) {
                 $params['messagingServiceSid'] = $this->messagingServiceSid;
             } else {
