@@ -56,7 +56,7 @@ class CompteController extends Controller
     public function index(CompteFilterRequest $request)
     {
 
-        $now = now()->toDateTimeString();
+    $now = now()->toDateTimeString();
 
         $baseQuery = Compte::query()
             ->where(function ($q) {

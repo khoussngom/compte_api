@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Transaction;
 use App\Models\Compte;
 use App\Models\User;
+use App\Repositories\MongoTransactionRepository;
 use Illuminate\Support\Facades\DB;
 
 class TransactionService
@@ -63,7 +64,29 @@ class TransactionService
                 'agent_id' => $agent->id,
             ]);
 
-            return $transaction->load('compte','agent');
+            $transaction = $transaction->load('compte','agent');
+
+            // Also persist a copy in MongoDB (best-effort). Failures here should not rollback SQL transaction.
+            try {
+                $mongoRepo = new MongoTransactionRepository();
+                $mongoPayload = [
+                    'id' => (string) $transaction->id,
+                    'code_transaction' => $transaction->code_transaction,
+                    'type' => $transaction->type,
+                    'montant' => (string) $transaction->montant,
+                    'description' => $transaction->description,
+                    'compte_id' => (string) $transaction->compte_id,
+                    'agent_id' => (string) $transaction->agent_id,
+                    'created_at' => $transaction->created_at ? $transaction->created_at->toAtomString() : null,
+                    'updated_at' => $transaction->updated_at ? $transaction->updated_at->toAtomString() : null,
+                ];
+                $mongoRepo->insert($mongoPayload);
+            } catch (\Throwable $e) {
+                // Log and continue; Mongo is secondary persistence for analytics/backup.
+                \Log::error('Failed to persist transaction to MongoDB', ['error' => $e->getMessage(), 'transaction_id' => (string)$transaction->id]);
+            }
+
+            return $transaction;
         });
     }
 
