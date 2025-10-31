@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('email')->nullable(false)->unique();
             $table->string('telephone')->nullable();
             $table->string('password');
+            // Flag to mark administrative users. Some test factories set 1/0 so use tinyInteger
+            // to avoid strict type-casting issues with PostgreSQL boolean casting in tests.
+            $table->tinyInteger('admin')->default(0);
             $table->timestamps();
         });
     }

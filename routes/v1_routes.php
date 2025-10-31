@@ -56,4 +56,15 @@ Route::middleware('cors')->group(function () {
     Route::post('comptes/{compte}/debloquer', [CompteController::class, 'debloquer'])->middleware(['auth:api','logging', \App\Http\Middleware\AccountAccessMiddleware::class]);
 
     Route::get('comptes/{numeroCompte}', [CompteController::class, 'showByNumero'])->middleware(['auth:api', \App\Http\Middleware\AccountAccessMiddleware::class]);
+
+    // Transactions module
+    Route::get('transactions', [\App\Http\Controllers\Api\V1\TransactionController::class, 'index'])->middleware('auth:api');
+    Route::get('transactions/{id}', [\App\Http\Controllers\Api\V1\TransactionController::class, 'show'])->middleware('auth:api');
+    Route::post('transactions', [\App\Http\Controllers\Api\V1\TransactionController::class, 'store'])->middleware('auth:api');
+    Route::put('transactions/{id}', [\App\Http\Controllers\Api\V1\TransactionController::class, 'update'])->middleware('auth:api');
+    Route::delete('transactions/{id}', [\App\Http\Controllers\Api\V1\TransactionController::class, 'destroy'])->middleware('auth:api');
+
+    // Dashboard
+    Route::get('dashboard', [\App\Http\Controllers\Api\V1\DashboardController::class, 'global'])->middleware('auth:api');
+    Route::get('dashboard/me', [\App\Http\Controllers\Api\V1\DashboardController::class, 'me'])->middleware('auth:api');
 });

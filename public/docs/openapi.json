@@ -377,6 +377,72 @@
                     }
                 }
             }
+            ,
+            "/api/v1/transactions": {
+                "get": {
+                    "summary": "Lister les transactions",
+                    "description": "Récupère les transactions (admin) ou celles du client connecté.",
+                    "tags": ["Transactions"],
+                    "security": [{ "bearerAuth": [] }],
+                    "parameters": [
+                        { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Numéro de page" },
+                        { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 }, "description": "Nombre d'éléments par page" },
+                        { "name": "compte_id", "in": "query", "schema": { "type": "string" }, "description": "Filtrer par compte (UUID ou numero)" },
+                        { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["deposit", "withdrawal"] }, "description": "Filtrer par type de transaction" }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Liste des transactions",
+                            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransactionsResponse" } } }
+                        }
+                    }
+                },
+                "post": {
+                    "summary": "Créer une transaction (déposer / retirer)",
+                    "description": "Effectue un dépôt ou retrait sur un compte. Le service applique les règles métier (solde calculé à partir des transactions).",
+                    "tags": ["Transactions"],
+                    "security": [{ "bearerAuth": [] }],
+                    "requestBody": {
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/StoreTransactionRequest" }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "201": { "description": "Transaction créée", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Transaction" } } } },
+                        "422": { "description": "Erreur métier (ex: solde insuffisant)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" } } } }
+                    }
+                }
+            },
+
+            "/api/v1/transactions/{id}": {
+                "get": {
+                    "summary": "Récupérer une transaction par id",
+                    "tags": ["Transactions"],
+                    "security": [{ "bearerAuth": [] }],
+                    "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ],
+                    "responses": { "200": { "description": "Transaction trouvée", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Transaction" } } } }, "404": { "description": "Non trouvé" } }
+                },
+                "delete": {
+                    "summary": "Annuler/supprimer une transaction (admin)",
+                    "tags": ["Transactions"],
+                    "security": [{ "bearerAuth": [] }],
+                    "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ],
+                    "responses": { "200": { "description": "Transaction supprimée" }, "403": { "description": "Interdit" } }
+                }
+            },
+
+            "/api/v1/comptes/{compteId}/transactions": {
+                "get": {
+                    "summary": "Lister les transactions d'un compte",
+                    "tags": ["Transactions"],
+                    "security": [{ "bearerAuth": [] }],
+                    "parameters": [ { "name": "compteId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+                    "responses": { "200": { "description": "Transactions du compte", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransactionsResponse" } } } } }
+                }
+            }
         },
         "components": {
             "securitySchemes": {
@@ -575,6 +641,38 @@
                         "success": { "type": "boolean", "example": true },
                         "message": { "type": "string", "example": "Compte archivé avec succès" },
                         "data": { "$ref": "#/components/schemas/Compte" }
+                    }
+                }
+                ,
+                "Transaction": {
+                    "type": "object",
+                    "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "code_transaction": { "type": "string" },
+                        "type": { "type": "string", "enum": ["deposit", "withdrawal"] },
+                        "montant": { "type": "number" },
+                        "description": { "type": "string", "nullable": true },
+                        "compte_id": { "type": "string" },
+                        "agent_id": { "type": "string", "nullable": true },
+                        "created_at": { "type": "string", "format": "date-time" }
+                    }
+                },
+                "TransactionsResponse": {
+                    "type": "object",
+                    "properties": {
+                        "success": { "type": "boolean" },
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Transaction" } },
+                        "pagination": { "$ref": "#/components/schemas/Pagination" }
+                    }
+                },
+                "StoreTransactionRequest": {
+                    "type": "object",
+                    "required": ["type", "montant", "compte_id"],
+                    "properties": {
+                        "type": { "type": "string", "enum": ["deposit", "withdrawal"] },
+                        "montant": { "type": "number", "minimum": 0 },
+                        "description": { "type": "string" },
+                        "compte_id": { "type": "string" }
                     }
                 }
             }
