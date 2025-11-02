@@ -46,6 +46,8 @@ Route::middleware('cors')->group(function () {
     Route::get('health', [\App\Http\Controllers\HealthController::class, 'index']);
 
     Route::get('comptes/mes-comptes', [CompteController::class, 'mesComptes'])->middleware('auth:api');
+    // List transactions for a specific compte (by id)
+    Route::get('comptes/{compteId}/transactions', [\App\Http\Controllers\Api\V1\TransactionController::class, 'listForCompte'])->middleware(['auth:api', \App\Http\Middleware\AccountAccessMiddleware::class])->where('compteId', '[0-9a-fA-F\-]{36}');
     Route::post('comptes/{id}/archive', [CompteController::class, 'archive'])->middleware(['auth:api', \App\Http\Middleware\AccountAccessMiddleware::class]);
 
 

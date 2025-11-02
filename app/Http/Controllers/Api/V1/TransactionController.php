@@ -9,6 +9,7 @@ use App\Services\TransactionService;
 use App\Http\Requests\StoreTransactionRequest;
 use App\Http\Requests\UpdateTransactionRequest;
 use App\Models\Transaction;
+use App\Models\Compte;
 
 class TransactionController extends Controller
 {
@@ -32,6 +33,26 @@ class TransactionController extends Controller
     {
         $user = $request->user();
         $query = $this->service->listForUser($user);
+        $pag = $query->paginate(25);
+        return response()->json($pag);
+    }
+
+    /**
+     * List transactions for a specific compte (by id)
+     */
+    public function listForCompte(Request $request, $compteId)
+    {
+        $user = $request->user();
+        $compte = Compte::with('client')->findOrFail($compteId);
+
+        // Basic authorization: admins can view any, clients only their comptes
+        if (!($user->admin ?? false)) {
+            if (! $compte->client || ($compte->client->user_id ?? null) !== $user->id) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+        }
+
+        $query = Transaction::where('compte_id', $compteId)->with('agent','compte')->latest();
         $pag = $query->paginate(25);
         return response()->json($pag);
     }
