@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Services\MessageServiceInterface;
 use Twilio\Rest\Client;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as FrameworkVerifyCsrf;
+use Illuminate\Support\Facades\File;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -77,6 +78,50 @@ class AppServiceProvider extends ServiceProvider
                 'khouss.ngom/api/v1',
                 'api/v1/*',
             ]);
+        }
+
+        // Ensure Passport RSA keys exist — if not, generate them at runtime.
+        // This prevents "Invalid key supplied" errors when the oauth keys are missing
+        // (for example after a fresh checkout or in some deployment environments).
+        // We generate a 2048-bit RSA keypair and store them under storage/ (same location
+        // as `php artisan passport:keys` would). This is safe for development and
+        // acceptable for many deployments, but for production you may prefer to
+        // provision keys externally and keep them out of the repo.
+        try {
+            $privatePath = storage_path('oauth-private.key');
+            $publicPath = storage_path('oauth-public.key');
+
+            if (!File::exists($privatePath) || !File::exists($publicPath)) {
+                // Generate a new 2048-bit RSA key pair
+                $config = [
+                    "private_key_bits" => 2048,
+                    "private_key_type" => \OPENSSL_KEYTYPE_RSA,
+                ];
+
+                $res = \openssl_pkey_new($config);
+                if ($res === false) {
+                    \Log::error('Failed to generate RSA keypair for Passport: ' . \openssl_error_string());
+                } else {
+                    // Export private key
+                    \openssl_pkey_export($res, $privateKeyPem);
+
+                    // Extract public key
+                    $details = \openssl_pkey_get_details($res);
+                    $publicKeyPem = $details['key'] ?? null;
+
+                    if ($privateKeyPem && $publicKeyPem) {
+                        File::put($privatePath, $privateKeyPem);
+                        File::put($publicPath, $publicKeyPem);
+                        @chmod($privatePath, 0600);
+                        @chmod($publicPath, 0600);
+                        \Log::info('Generated Passport RSA keypair at storage/oauth-*.key');
+                    } else {
+                        \Log::error('Failed to obtain PEM contents when generating Passport keys');
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::error('Error while ensuring Passport keys exist: ' . $e->getMessage());
         }
     }
 }
