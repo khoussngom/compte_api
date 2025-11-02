@@ -62,6 +62,8 @@ Route::middleware('cors')->group(function () {
     // Transactions module
     Route::get('transactions', [\App\Http\Controllers\Api\V1\TransactionController::class, 'index'])->middleware('auth:api');
     Route::get('transactions/{id}', [\App\Http\Controllers\Api\V1\TransactionController::class, 'show'])->middleware('auth:api');
+    // Get a transaction that belongs to a specific compte
+    Route::get('comptes/{compteId}/transactions/{id}', [\App\Http\Controllers\Api\V1\TransactionController::class, 'showForCompte'])->middleware(['auth:api', \App\Http\Middleware\AccountAccessMiddleware::class])->where('compteId', '[0-9a-fA-F\-]{36}');
     Route::post('transactions', [\App\Http\Controllers\Api\V1\TransactionController::class, 'store'])->middleware('auth:api');
     Route::put('transactions/{id}', [\App\Http\Controllers\Api\V1\TransactionController::class, 'update'])->middleware('auth:api');
     Route::delete('transactions/{id}', [\App\Http\Controllers\Api\V1\TransactionController::class, 'destroy'])->middleware('auth:api');

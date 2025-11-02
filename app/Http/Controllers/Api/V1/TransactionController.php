@@ -58,6 +58,31 @@ class TransactionController extends Controller
     }
 
     /**
+     * Show a single transaction that belongs to a specific compte (ensure it belongs)
+     */
+    public function showForCompte(Request $request, $compteId, $id)
+    {
+        // Find transaction that matches both id and compte_id
+        $transaction = Transaction::with('compte','agent')
+            ->where('id', $id)
+            ->where('compte_id', $compteId)
+            ->first();
+
+        if (! $transaction) {
+            return response()->json(['message' => 'Transaction non trouvée'], 404);
+        }
+
+        // Authorization: reuse policy if present
+        try {
+            $this->authorize('view', $transaction);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        return response()->json($transaction);
+    }
+
+    /**
      * @OA\Get(
      *   path="/api/v1/transactions/{id}",
      *   tags={"Transactions"},

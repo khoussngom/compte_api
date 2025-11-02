@@ -6,190 +6,419 @@
         "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
     },
     "servers": [
-        { "url": "http://localhost:8000", "description": "Local development — server root; use /api/v1/* in paths" },
-        { "url": "https://compte-api-hjvy.onrender.com", "description": "Hosted docs (Render) — remove legacy prefix" }
+        {
+            "url": "http://localhost:8000",
+            "description": "Local development — server root; use /api/v1/* in paths"
+        },
+        {
+            "url": "https://compte-api-hjvy.onrender.com",
+            "description": "Hosted docs (Render) — remove legacy prefix"
+        }
     ],
-        "paths": {
-            "/api/v1/comptes": {
+    "paths": {
+        "/api/v1/comptes": {
             "get": {
                 "summary": "Lister tous les comptes",
                 "description": "Récupère une liste paginée de comptes avec possibilité de filtrage et tri",
-                "tags": ["Comptes"],
-                "security": [{ "bearerAuth": [] }],
+                "tags": [
+                    "Comptes"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
                 "parameters": [
-                    { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Numéro de page" },
-                    { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 }, "description": "Nombre d'éléments par page" },
-                    { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["epargne", "cheque"] }, "description": "Filtrer par type de compte" },
-                    { "name": "statut", "in": "query", "schema": { "type": "string", "enum": ["actif", "bloque", "ferme"] }, "description": "Filtrer par statut" },
-                    { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Recherche par numéro de compte ou nom du titulaire" },
-                    { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["date_creation", "solde", "titulaire_compte"], "default": "date_creation" }, "description": "Champ de tri (utilisez les clés exactes: date_creation, solde, titulaire_compte)" },
-                    { "name": "order", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }, "description": "Ordre de tri" }
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        },
+                        "description": "Numéro de page"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        },
+                        "description": "Nombre d'éléments par page"
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "epargne",
+                                "cheque"
+                            ]
+                        },
+                        "description": "Filtrer par type de compte"
+                    },
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "actif",
+                                "bloque",
+                                "ferme"
+                            ]
+                        },
+                        "description": "Filtrer par statut"
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Recherche par numéro de compte ou nom du titulaire"
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "date_creation",
+                                "solde",
+                                "titulaire_compte"
+                            ],
+                            "default": "date_creation"
+                        },
+                        "description": "Champ de tri (utilisez les clés exactes: date_creation, solde, titulaire_compte)"
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "default": "desc"
+                        },
+                        "description": "Ordre de tri"
+                    }
                 ],
                 "responses": {
-                "200": {
-                    "description": "Liste des comptes récupérée avec succès",
-                    "content": {
-                    "application/json": {
-                        "schema": { "$ref": "#/components/schemas/ComptesResponse" }
+                    "200": {
+                        "description": "Liste des comptes récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ComptesResponse"
+                                }
+                            }
+                        }
                     }
-                    }
-                }
                 }
             },
             "post": {
                 "summary": "Créer un compte bancaire avec client",
                 "description": "Crée un utilisateur, un client et un compte bancaire avec validation stricte.",
-                "tags": ["Comptes"],
+                "tags": [
+                    "Comptes"
+                ],
                 "requestBody": {
-                "required": true,
-                "content": {
-                    "application/json": {
-                    "schema": {
-                        "type": "object",
-                        "required": ["type", "soldeInitial", "devise", "solde", "client"],
-                        "properties": {
-                        "type": { "type": "string", "enum": ["cheque", "epargne"] },
-                        "soldeInitial": { "type": "number", "minimum": 10000 },
-                        "devise": { "type": "string", "enum": ["FCFA", "XOF"] },
-                        "solde": { "type": "number", "minimum": 0 },
-                        "client": {
-                            "type": "object",
-                            "required": ["titulaire", "nci", "email", "telephone", "adresse"],
-                            "properties": {
-                            "id": { "type": "integer", "nullable": true },
-                            "titulaire": { "type": "string" },
-                            "nci": { "type": "string", "pattern": "^[12][0-9]{12}$" },
-                            "email": { "type": "string", "format": "email" },
-                            "telephone": { "type": "string", "pattern": "^\\+221(77|78|70|76|75)[0-9]{7}$" },
-                            "adresse": { "type": "string" }
-                            }
-                        }
-                        }
-                    },
-                    "example": {
-                        "type": "cheque",
-                        "soldeInitial": 500000,
-                        "devise": "FCFA",
-                        "solde": 10000,
-                        "client": {
-                        "id": null,
-                        "titulaire": "Birane baila wane",
-                        "nci": "1234567890123",
-                        "email": "viziodev03@gmail.com",
-                        "telephone": "+221777669595",
-                        "adresse": "Dakar, Sénégal"
-                        }
-                    }
-                    }
-                }
-                },
-                "responses": {
-                "201": {
-                    "description": "Compte créé avec succès",
+                    "required": true,
                     "content": {
-                    "application/json": {
-                        "schema": { "$ref": "#/components/schemas/AccountCreationSuccessResponse" }
-                    }
-                    }
-                },
-                "400": {
-                    "description": "Données invalides",
-                    "content": {
-                    "application/json": {
-                        "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" }
-                    }
-                    }
-                },
-                "500": { "description": "Erreur serveur" }
-                }
-            }
-            },
-
-            "/api/v1/users/clients": {
-            "get": {
-                "summary": "Lister les utilisateurs qui sont clients",
-                "tags": ["Users"],
-                "responses": {
-                "200": {
-                    "description": "Liste des clients",
-                    "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/UserWithClient" } } } } } }
-                }
-                }
-            }
-            },
-            "/api/v1/users/admins": {
-            "get": {
-                "summary": "Lister les utilisateurs qui sont admins",
-                "tags": ["Users"],
-                "responses": {
-                "200": {
-                    "description": "Liste des admins",
-                    "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/UserWithAdmin" } } } } } }
-                }
-                }
-            }
-            },
-
-            "/api/v1/users/client": {
-                "get": {
-                    "summary": "Trouver un client par telephone ou NCI",
-                    "description": "Renvoie le client correspondant au `telephone` ou au `nci`. Au moins un des deux paramètres est requis.",
-                    "tags": ["Users"],
-                    "parameters": [
-                        { "name": "telephone", "in": "query", "required": false, "schema": { "type": "string", "example": "+221771234567" }, "description": "Numéro de téléphone du client (format international ou local)" },
-                        { "name": "nci", "in": "query", "required": false, "schema": { "type": "string", "example": "1234567890123" }, "description": "Numéro de la carte d'identité (NCI)" }
-                    ],
-                    "responses": {
-                        "200": {
-                            "description": "Client trouvé",
-                            "content": {
-                                "application/json": {
-                                    "schema": { "$ref": "#/components/schemas/ClientWithUserAndComptes" }
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "soldeInitial",
+                                    "devise",
+                                    "solde",
+                                    "client"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "cheque",
+                                            "epargne"
+                                        ]
+                                    },
+                                    "soldeInitial": {
+                                        "type": "number",
+                                        "minimum": 10000
+                                    },
+                                    "devise": {
+                                        "type": "string",
+                                        "enum": [
+                                            "FCFA",
+                                            "XOF"
+                                        ]
+                                    },
+                                    "solde": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "client": {
+                                        "type": "object",
+                                        "required": [
+                                            "titulaire",
+                                            "nci",
+                                            "email",
+                                            "telephone",
+                                            "adresse"
+                                        ],
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "nullable": true
+                                            },
+                                            "titulaire": {
+                                                "type": "string"
+                                            },
+                                            "nci": {
+                                                "type": "string",
+                                                "pattern": "^[12][0-9]{12}$"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email"
+                                            },
+                                            "telephone": {
+                                                "type": "string",
+                                                "pattern": "^\\+221(77|78|70|76|75)[0-9]{7}$"
+                                            },
+                                            "adresse": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "example": {
+                                "type": "cheque",
+                                "soldeInitial": 500000,
+                                "devise": "FCFA",
+                                "solde": 10000,
+                                "client": {
+                                    "id": null,
+                                    "titulaire": "Birane baila wane",
+                                    "nci": "1234567890123",
+                                    "email": "viziodev03@gmail.com",
+                                    "telephone": "+221777669595",
+                                    "adresse": "Dakar, Sénégal"
                                 }
                             }
-                        },
-                        "404": { "description": "Client introuvable" },
-                        "422": { "description": "Paramètre manquant ou invalide" }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Compte créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountCreationSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur"
                     }
                 }
-            },
-            "/api/v1/comptes/{numeroCompte}": {
-                "get": {
-                    "summary": "Récupérer un compte par son numéro (Admin ou Client)",
-                    "tags": ["Comptes"],
-                    "security": [{ "bearerAuth": [] }],
-                    "parameters": [
-                        { "name": "numeroCompte", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Numéro de compte (numero_compte)" }
-                    ],
-                    "responses": {
-                        "200": {
-                            "description": "Compte récupéré",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "success": { "type": "boolean" },
-                                            "data": { "$ref": "#/components/schemas/Compte" }
+            }
+        },
+        "/api/v1/users/clients": {
+            "get": {
+                "summary": "Lister les utilisateurs qui sont clients",
+                "tags": [
+                    "Users"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des clients",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UserWithClient"
+                                            }
                                         }
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/admins": {
+            "get": {
+                "summary": "Lister les utilisateurs qui sont admins",
+                "tags": [
+                    "Users"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des admins",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UserWithAdmin"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/client": {
+            "get": {
+                "summary": "Trouver un client par telephone ou NCI",
+                "description": "Renvoie le client correspondant au `telephone` ou au `nci`. Au moins un des deux paramètres est requis.",
+                "tags": [
+                    "Users"
+                ],
+                "parameters": [
+                    {
+                        "name": "telephone",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "+221771234567"
                         },
-                        "403": { "description": "Accès refusé" },
-                        "404": {
-                            "description": "Compte introuvable",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "success": { "type": "boolean", "example": false },
-                                            "error": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "code": { "type": "string", "example": "COMPTE_NOT_FOUND" },
-                                                    "message": { "type": "string", "example": "Le compte C00123456 est introuvable" }
+                        "description": "Numéro de téléphone du client (format international ou local)"
+                    },
+                    {
+                        "name": "nci",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "1234567890123"
+                        },
+                        "description": "Numéro de la carte d'identité (NCI)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientWithUserAndComptes"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client introuvable"
+                    },
+                    "422": {
+                        "description": "Paramètre manquant ou invalide"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{numeroCompte}": {
+            "get": {
+                "summary": "Récupérer un compte par son numéro (Admin ou Client)",
+                "tags": [
+                    "Comptes"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "numeroCompte",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Numéro de compte (numero_compte)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte récupéré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Compte"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    },
+                    "404": {
+                        "description": "Compte introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "COMPTE_NOT_FOUND"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Le compte C00123456 est introuvable"
                                                 }
                                             }
                                         }
@@ -200,481 +429,1095 @@
                     }
                 }
             }
-            ,
-            "/api/v1/comptes/{identifiant}": {
-                "patch": {
-                    "summary": "Mettre à jour un compte (par id ou numero)",
-                    "tags": ["Comptes"],
-                    "description": "Met à jour les informations d'un compte et du client associé. Tous les champs sont optionnels mais au moins un doit être fourni.",
-                    "security": [{ "bearerAuth": [] }],
-                    "parameters": [
-                        { "name": "identifiant", "in": "path", "required": true, "schema": { "type": "string" }, "description": "ID (UUID) ou numéro du compte (numero_compte)" }
-                    ],
-                    "requestBody": {
+        },
+        "/api/v1/comptes/{identifiant}": {
+            "patch": {
+                "summary": "Mettre à jour un compte (par id ou numero)",
+                "tags": [
+                    "Comptes"
+                ],
+                "description": "Met à jour les informations d'un compte et du client associé. Tous les champs sont optionnels mais au moins un doit être fourni.",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "identifiant",
+                        "in": "path",
                         "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "titulaire": { "type": "string", "description": "Nom du titulaire" },
-                                        "informationsClient": {
-                                            "type": "object",
-                                            "properties": {
-                                                "telephone": { "type": "string", "pattern": "^\\+221(77|78|70|76|75)[0-9]{7}$", "description": "Numéro Sénégalais (unique)" },
-                                                "email": { "type": "string", "format": "email", "description": "Email du client (unique)" },
-                                                "password": { "type": "string", "description": "Mot de passe en clair (sera hashé avant sauvegarde)" },
-                                                "nci": { "type": "string", "pattern": "^[12][0-9]{12}$", "description": "NCI valide" }
-                                            }
-                                        }
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "ID (UUID) ou numéro du compte (numero_compte)"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "titulaire": {
+                                        "type": "string",
+                                        "description": "Nom du titulaire"
                                     },
-                                    "example": {
-                                        "titulaire": "Birane baila wane",
-                                        "informationsClient": {
-                                            "telephone": "+221777669595",
-                                            "email": "viziodev03@gmail.com",
-                                            "password": "nouveauMdp123",
-                                            "nci": "1234567890123"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "responses": {
-                        "201": {
-                            "description": "Compte mis à jour avec succès",
-                            "content": {
-                                "application/json": {
-                                    "schema": { "$ref": "#/components/schemas/AccountUpdateSuccessResponse" }
-                                }
-                            }
-                        },
-                        "400": { "description": "Données invalides ou aucune donnée fournie" },
-                        "404": { "description": "Compte introuvable" },
-                        "422": { "description": "Erreur de validation (par ex. email/telephone déjà utilisé)" }
-                    }
-                }
-            }
-                ,
-
-            "/api/v1/comptes/numero/{numero}/bloquer": {
-                "post": {
-                    "summary": "Bloquer un compte par numéro (numero_compte)",
-                    "tags": ["Comptes"],
-                    "security": [{ "bearerAuth": [] }],
-                    "parameters": [
-                        { "name": "numero", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Numéro de compte (numero_compte)" }
-                    ],
-                    "requestBody": {
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": { "$ref": "#/components/schemas/BlocageRequest" },
-                                "example": {
-                                    "date_debut_blocage": "2025-10-25",
-                                    "date_fin_blocage": "2025-10-28",
-                                    "motif_blocage": "Suspicion de fraude"
-                                }
-                            }
-                        }
-                    },
-                    "responses": {
-                        "200": { "description": "Données de blocage enregistrées", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BlocageResponse" } } } },
-                        "400": { "description": "Données invalides" },
-                        "404": { "description": "Compte introuvable" }
-                    }
-                }
-            }
-            ,
-
-            "/api/v1/comptes/{compteId}": {
-                "delete": {
-                    "summary": "Supprimer un compte (par id)",
-                    "tags": ["Comptes"],
-                    "security": [{ "bearerAuth": [] }],
-                    "parameters": [
-                        { "name": "compteId", "in": "path", "required": true, "schema": { "type": "string", "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6" }, "description": "Identifiant UUID du compte à supprimer" }
-                    ],
-                    "responses": {
-                        "200": {
-                            "description": "Compte supprimé avec succès",
-                            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccountDeleteSuccessResponse" } } }
-                        },
-                        "403": { "description": "Accès refusé" },
-                        "404": { "description": "Compte introuvable" }
-                    }
-                }
-            },
-
-            "/api/v1/login": {
-                "post": {
-                    "summary": "Authentifier un utilisateur (login)",
-                    "tags": ["Auth"],
-                    "description": "Connexion par `activation_code` (première connexion) ou par `password`. Si c'est la première connexion, seul le code d'activation est requis (ne pas inclure le champ mot de passe). Exemple pour test admin : `{ \"identifier\": \"admin@gmail.com\", \"password\": \"admin\" }`",
-                    "requestBody": {
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "identifier": { "type": "string", "description": "Email, telephone ou nci" },
-                                        "activation_code": { "type": "string", "description": "Code d'activation pour première connexion" },
-                                        "password": { "type": "string", "description": "Mot de passe pour connexion normale" }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "responses": {
-                        "200": {
-                            "description": "Connexion réussie",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
+                                    "informationsClient": {
                                         "type": "object",
                                         "properties": {
-                                            "access_token": { "type": "string" },
-                                            "token_type": { "type": "string", "example": "Bearer" },
-                                            "expires_in": { "type": "integer" },
-                                            "must_change_password": { "type": "boolean", "description": "true si l'utilisateur doit changer son mot de passe après la connexion (first-login)" }
+                                            "telephone": {
+                                                "type": "string",
+                                                "pattern": "^\\+221(77|78|70|76|75)[0-9]{7}$",
+                                                "description": "Numéro Sénégalais (unique)"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "description": "Email du client (unique)"
+                                            },
+                                            "password": {
+                                                "type": "string",
+                                                "description": "Mot de passe en clair (sera hashé avant sauvegarde)"
+                                            },
+                                            "nci": {
+                                                "type": "string",
+                                                "pattern": "^[12][0-9]{12}$",
+                                                "description": "NCI valide"
+                                            }
                                         }
+                                    }
+                                },
+                                "example": {
+                                    "titulaire": "Birane baila wane",
+                                    "informationsClient": {
+                                        "telephone": "+221777669595",
+                                        "email": "viziodev03@gmail.com",
+                                        "password": "nouveauMdp123",
+                                        "nci": "1234567890123"
                                     }
                                 }
                             }
-                        },
-                        "401": { "description": "Identifiants invalides" }
+                        }
                     }
-                }
-            },
-
-            "/api/v1/clients/change-password": {
-                "post": {
-                    "summary": "Changer le mot de passe (protected)",
-                    "tags": ["Auth"],
-                    "security": [{ "bearerAuth": [] }],
-                    "requestBody": {
-                        "required": true,
+                },
+                "responses": {
+                    "201": {
+                        "description": "Compte mis à jour avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "required": ["new_password", "new_password_confirmation"],
-                                    "properties": {
-                                        "current_password": { "type": "string", "description": "Requis sauf si force_password_change=true" },
-                                        "new_password": { "type": "string" },
-                                        "new_password_confirmation": { "type": "string" }
-                                    }
+                                    "$ref": "#/components/schemas/AccountUpdateSuccessResponse"
                                 }
                             }
                         }
                     },
-                    "responses": {
-                        "200": { "description": "Mot de passe mis à jour avec succès" },
-                        "400": { "description": "Données invalides" },
-                        "401": { "description": "Non autorisé" }
-                    }
-                }
-            }
-            ,
-            "/api/v1/transactions": {
-                "get": {
-                    "summary": "Lister les transactions",
-                    "description": "Récupère les transactions (admin) ou celles du client connecté.",
-                    "tags": ["Transactions"],
-                    "security": [{ "bearerAuth": [] }],
-                    "parameters": [
-                        { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Numéro de page" },
-                        { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 }, "description": "Nombre d'éléments par page" },
-                        { "name": "compte_id", "in": "query", "schema": { "type": "string" }, "description": "Filtrer par compte (UUID ou numero)" },
-                        { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["deposit", "withdrawal"] }, "description": "Filtrer par type de transaction" }
-                    ],
-                    "responses": {
-                        "200": {
-                            "description": "Liste des transactions",
-                            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransactionsResponse" } } }
-                        }
-                    }
-                },
-                "post": {
-                    "summary": "Créer une transaction (déposer / retirer)",
-                    "description": "Effectue un dépôt ou retrait sur un compte. Le service applique les règles métier (solde calculé à partir des transactions).",
-                    "tags": ["Transactions"],
-                    "security": [{ "bearerAuth": [] }],
-                    "requestBody": {
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": { "$ref": "#/components/schemas/StoreTransactionRequest" }
-                            }
-                        }
+                    "400": {
+                        "description": "Données invalides ou aucune donnée fournie"
                     },
-                    "responses": {
-                        "201": { "description": "Transaction créée", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Transaction" } } } },
-                        "422": { "description": "Erreur métier (ex: solde insuffisant)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" } } } }
+                    "404": {
+                        "description": "Compte introuvable"
+                    },
+                    "422": {
+                        "description": "Erreur de validation (par ex. email/telephone déjà utilisé)"
                     }
-                }
-            },
-
-            "/api/v1/transactions/{id}": {
-                "get": {
-                    "summary": "Récupérer une transaction par id",
-                    "tags": ["Transactions"],
-                    "security": [{ "bearerAuth": [] }],
-                    "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ],
-                    "responses": { "200": { "description": "Transaction trouvée", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Transaction" } } } }, "404": { "description": "Non trouvé" } }
-                },
-                "delete": {
-                    "summary": "Annuler/supprimer une transaction (admin)",
-                    "tags": ["Transactions"],
-                    "security": [{ "bearerAuth": [] }],
-                    "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ],
-                    "responses": { "200": { "description": "Transaction supprimée" }, "403": { "description": "Interdit" } }
-                }
-            },
-
-            "/api/v1/comptes/{compteId}/transactions": {
-                "get": {
-                    "summary": "Lister les transactions d'un compte",
-                    "tags": ["Transactions"],
-                    "security": [{ "bearerAuth": [] }],
-                    "parameters": [ { "name": "compteId", "in": "path", "required": true, "schema": { "type": "string" } } ],
-                    "responses": { "200": { "description": "Transactions du compte", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransactionsResponse" } } } } }
                 }
             }
         },
-        "components": {
-            "securitySchemes": {
-                "bearerAuth": {
-                    "type": "http",
-                    "scheme": "bearer",
-                    "bearerFormat": "JWT"
+        "/api/v1/comptes/numero/{numero}/bloquer": {
+            "post": {
+                "summary": "Bloquer un compte par numéro (numero_compte)",
+                "tags": [
+                    "Comptes"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "numero",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Numéro de compte (numero_compte)"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BlocageRequest"
+                            },
+                            "example": {
+                                "date_debut_blocage": "2025-10-25",
+                                "date_fin_blocage": "2025-10-28",
+                                "motif_blocage": "Suspicion de fraude"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Données de blocage enregistrées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BlocageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides"
+                    },
+                    "404": {
+                        "description": "Compte introuvable"
+                    }
                 }
-            },
-            "schemas": {
-                "Compte": {
-                    "type": "object",
-                    "properties": {
-                        "id": { "type": "string", "format": "uuid" },
-                        "numeroCompte": { "type": "string" },
-                        "titulaire": { "type": "string" },
-                        "type": { "type": "string", "enum": ["epargne", "cheque"] },
-                        "solde": { "type": "number" },
-                        "devise": { "type": "string" },
-                        "dateCreation": { "type": "string", "format": "date-time" },
-                        "statut": { "type": "string", "enum": ["actif", "bloque", "ferme"] },
-                        "dateDebutBlocage": { "type": "string", "format": "date", "nullable": true },
-                        "dateFinBlocage": { "type": "string", "format": "date", "nullable": true },
-                        "dateFermeture": { "type": "string", "format": "date-time", "nullable": true },
-                        "motifBlocage": { "type": "string", "nullable": true },
-                        "archived": { "type": "boolean", "nullable": true },
-                        "metadonnees": { "type": "object", "properties": { "derniereModification": { "type": "string", "format": "date-time" }, "version": { "type": "integer" } } }
+            }
+        },
+        "/api/v1/comptes/{compteId}": {
+            "delete": {
+                "summary": "Supprimer un compte (par id)",
+                "tags": [
+                    "Comptes"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "compteId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        },
+                        "description": "Identifiant UUID du compte à supprimer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountDeleteSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    },
+                    "404": {
+                        "description": "Compte introuvable"
+                    }
+                }
+            }
+        },
+        "/api/v1/login": {
+            "post": {
+                "summary": "Authentifier un utilisateur (login)",
+                "tags": [
+                    "Auth"
+                ],
+                "description": "Connexion par `activation_code` (première connexion) ou par `password`. Si c'est la première connexion, seul le code d'activation est requis (ne pas inclure le champ mot de passe). Exemple pour test admin : `{ \"identifier\": \"admin@gmail.com\", \"password\": \"admin\" }`",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "identifier": {
+                                        "type": "string",
+                                        "description": "Email, telephone ou nci"
+                                    },
+                                    "activation_code": {
+                                        "type": "string",
+                                        "description": "Code d'activation pour première connexion"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "description": "Mot de passe pour connexion normale"
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
-
-                "Pagination": {
-                    "type": "object",
-                    "properties": {
-                        "currentPage": { "type": "integer" },
-                        "totalPages": { "type": "integer" },
-                        "totalItems": { "type": "integer" },
-                        "itemsPerPage": { "type": "integer" },
-                        "hasNext": { "type": "boolean" },
-                        "hasPrevious": { "type": "boolean" }
-                    }
-                },
-
-                "Links": {
-                    "type": "object",
-                    "properties": {
-                        "self": { "type": "string" },
-                        "next": { "type": "string" },
-                        "first": { "type": "string" },
-                        "last": { "type": "string" }
-                    }
-                },
-
-                "ComptesResponse": {
-                    "type": "object",
-                    "properties": {
-                        "success": { "type": "boolean" },
-                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Compte" } },
-                        "pagination": { "$ref": "#/components/schemas/Pagination" },
-                        "links": { "$ref": "#/components/schemas/Links" }
-                    }
-                },
-
-                "AccountCreationSuccessResponse": {
-                    "type": "object",
-                    "properties": {
-                        "success": { "type": "boolean", "example": true },
-                        "message": { "type": "string", "example": "Compte créé avec succès" },
-                        "data": {
-                            "type": "object",
-                            "properties": {
-                                "id": { "type": "string", "example": "660f9511-f30c-52e5-b827-557766551111" },
-                                "numeroCompte": { "type": "string", "example": "C00123460" },
-                                "titulaire": { "type": "string", "example": "Cheikh Sy" },
-                                "type": { "type": "string", "example": "cheque" },
-                                "solde": { "type": "number", "example": 500000 },
-                                "devise": { "type": "string", "example": "FCFA" },
-                                "dateCreation": { "type": "string", "format": "date-time", "example": "2025-10-19T10:30:00Z" },
-                                "statut": { "type": "string", "example": "actif" },
-                                "metadata": {
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "derniereModification": { "type": "string", "format": "date-time", "example": "2025-10-19T10:30:00Z" },
-                                        "version": { "type": "integer", "example": 1 }
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "expires_in": {
+                                            "type": "integer"
+                                        },
+                                        "must_change_password": {
+                                            "type": "boolean",
+                                            "description": "true si l'utilisateur doit changer son mot de passe après la connexion (first-login)"
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                },
-
-                "AccountUpdateSuccessResponse": {
-                    "type": "object",
-                    "properties": {
-                        "success": { "type": "boolean", "example": true },
-                        "message": { "type": "string", "example": "Compte mis à jour avec succès" },
-                        "data": { "$ref": "#/components/schemas/Compte" }
-                    }
-                },
-
-                "AccountDeleteSuccessResponse": {
-                    "type": "object",
-                    "properties": {
-                        "success": { "type": "boolean", "example": true },
-                        "message": { "type": "string", "example": "Compte supprimé avec succès" },
-                        "data": { "$ref": "#/components/schemas/Compte" }
-                    }
-                },
-
-                "ValidationErrorResponse": {
-                    "type": "object",
-                    "properties": {
-                        "success": { "type": "boolean", "example": false },
-                        "error": {
-                            "type": "object",
-                            "properties": {
-                                "code": { "type": "string", "example": "VALIDATION_ERROR" },
-                                "message": { "type": "string", "example": "Les données fournies sont invalides" },
-                                "details": {
-                                    "type": "object",
-                                    "additionalProperties": { "type": "string" },
-                                    "example": {
-                                        "soldeInitial": "Le solde initial doit être supérieur ou égal à 10000"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-
-                "UserWithClient": {
-                    "type": "object",
-                    "properties": {
-                        "id": { "type": "string" },
-                        "nom": { "type": "string" },
-                        "prenom": { "type": "string" },
-                        "email": { "type": "string" },
-                        "telephone": { "type": "string" },
-                        "client": { "type": "object" }
-                    }
-                },
-                "ClientWithUserAndComptes": {
-                    "type": "object",
-                    "properties": {
-                        "success": { "type": "boolean", "example": true },
-                        "data": {
-                            "type": "object",
-                            "properties": {
-                                "id": { "type": "string", "format": "uuid" },
-                                "nom": { "type": "string" },
-                                "prenom": { "type": "string" },
-                                "email": { "type": "string" },
-                                "telephone": { "type": "string" },
-                                "nci": { "type": "string" },
-                                "adresse": { "type": "string" },
-                                "user": { "$ref": "#/components/schemas/UserWithClient" },
-                                "comptes": { "type": "array", "items": { "$ref": "#/components/schemas/Compte" } }
-                            }
-                        }
-                    }
-                },
-
-                "UserWithAdmin": {
-                    "type": "object",
-                    "properties": {
-                        "id": { "type": "string" },
-                        "nom": { "type": "string" },
-                        "prenom": { "type": "string" },
-                        "email": { "type": "string" },
-                        "telephone": { "type": "string" },
-                        "admin": { "type": "object" }
-                    }
-                },
-
-                "BlocageRequest": {
-                    "type": "object",
-                    "required": ["date_debut_blocage", "date_fin_blocage", "motif_blocage"],
-                    "properties": {
-                        "date_debut_blocage": { "type": "string", "format": "date", "example": "2025-10-25" },
-                        "date_fin_blocage": { "type": "string", "format": "date", "example": "2025-10-28" },
-                        "motif_blocage": { "type": "string", "example": "Suspicion de fraude" }
-                    }
-                },
-
-                "BlocageResponse": {
-                    "type": "object",
-                    "properties": {
-                        "success": { "type": "boolean", "example": true },
-                        "message": { "type": "string", "example": "Données de blocage enregistrées" },
-                        "data": { "$ref": "#/components/schemas/Compte" }
-                    }
-                },
-
-                "ArchiveResponse": {
-                    "type": "object",
-                    "properties": {
-                        "success": { "type": "boolean", "example": true },
-                        "message": { "type": "string", "example": "Compte archivé avec succès" },
-                        "data": { "$ref": "#/components/schemas/Compte" }
+                    },
+                    "401": {
+                        "description": "Identifiants invalides"
                     }
                 }
-                ,
-                "Transaction": {
-                    "type": "object",
-                    "properties": {
-                        "id": { "type": "string", "format": "uuid" },
-                        "code_transaction": { "type": "string" },
-                        "type": { "type": "string", "enum": ["deposit", "withdrawal"] },
-                        "montant": { "type": "number" },
-                        "description": { "type": "string", "nullable": true },
-                        "compte_id": { "type": "string" },
-                        "agent_id": { "type": "string", "nullable": true },
-                        "created_at": { "type": "string", "format": "date-time" }
+            }
+        },
+        "/api/v1/clients/change-password": {
+            "post": {
+                "summary": "Changer le mot de passe (protected)",
+                "tags": [
+                    "Auth"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "description": "Requis sauf si force_password_change=true"
+                                    },
+                                    "new_password": {
+                                        "type": "string"
+                                    },
+                                    "new_password_confirmation": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
-                "TransactionsResponse": {
-                    "type": "object",
-                    "properties": {
-                        "success": { "type": "boolean" },
-                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Transaction" } },
-                        "pagination": { "$ref": "#/components/schemas/Pagination" }
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe mis à jour avec succès"
+                    },
+                    "400": {
+                        "description": "Données invalides"
+                    },
+                    "401": {
+                        "description": "Non autorisé"
+                    }
+                }
+            }
+        },
+        "/api/v1/transactions": {
+            "get": {
+                "summary": "Lister les transactions",
+                "description": "Récupère les transactions (admin) ou celles du client connecté.",
+                "tags": [
+                    "Transactions"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        },
+                        "description": "Numéro de page"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        },
+                        "description": "Nombre d'éléments par page"
+                    },
+                    {
+                        "name": "compte_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filtrer par compte (UUID ou numero)"
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "depot",
+                                "retrait"
+                            ]
+                        },
+                        "description": "Filtrer par type de transaction"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des transactions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Créer une transaction (déposer / retirer)",
+                "description": "Effectue un dépôt ou retrait sur un compte. Le service applique les règles métier (solde calculé à partir des transactions).",
+                "tags": [
+                    "Transactions"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreTransactionRequest"
+                            }
+                        }
                     }
                 },
-                "StoreTransactionRequest": {
-                    "type": "object",
-                    "required": ["type", "montant", "compte_id"],
-                    "properties": {
-                        "type": { "type": "string", "enum": ["deposit", "withdrawal"] },
-                        "montant": { "type": "number", "minimum": 0 },
-                        "description": { "type": "string" },
-                        "compte_id": { "type": "string" }
+                "responses": {
+                    "201": {
+                        "description": "Transaction créée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Transaction"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur métier (ex: solde insuffisant)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/transactions/{id}": {
+            "get": {
+                "summary": "Récupérer une transaction par id",
+                "tags": [
+                    "Transactions"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "019a3b7b-ec34-735d-b1ca-6bacaa8182a3"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Transaction"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Annuler/supprimer une transaction (admin)",
+                "tags": [
+                    "Transactions"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction supprimée"
+                    },
+                    "403": {
+                        "description": "Interdit"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{compteId}/transactions": {
+            "get": {
+                "summary": "Lister les transactions d'un compte",
+                "tags": [
+                    "Transactions"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "compteId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transactions du compte",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{compteId}/transactions/{id}": {
+            "get": {
+                "summary": "Récupérer une transaction d'un compte par id",
+                "tags": [
+                    "Transactions"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "compteId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "019a2f78-5752-71f2-804d-bd3cd8263714"
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "019a3b7b-ec34-735d-b1ca-6bacaa8182a3"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Transaction"
+                                },
+                                "examples": {
+                                    "sample": {
+                                        "value": {
+                                            "id": "019a3b7b-ec34-735d-b1ca-6bacaa8182a3",
+                                            "code_transaction": "TD202510311816089b56",
+                                            "type": "depot",
+                                            "montant": 500000.0,
+                                            "description": "remboursement",
+                                            "compte_id": "019a2f78-5752-71f2-804d-bd3cd8263714",
+                                            "agent_id": "a12572cb-0e0a-4209-8e95-4230d1e08818",
+                                            "created_at": "2025-10-31T18:16:08Z"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "403": {
+                            "description": "Accès refusé"
+                        },
+                        "404": {
+                            "description": "Transaction introuvable"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        },
+        "schemas": {
+            "Compte": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "numeroCompte": {
+                        "type": "string"
+                    },
+                    "titulaire": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "epargne",
+                            "cheque"
+                        ]
+                    },
+                    "solde": {
+                        "type": "number"
+                    },
+                    "devise": {
+                        "type": "string"
+                    },
+                    "dateCreation": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "actif",
+                            "bloque",
+                            "ferme"
+                        ]
+                    },
+                    "dateDebutBlocage": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "dateFinBlocage": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "dateFermeture": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "motifBlocage": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "archived": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "metadonnees": {
+                        "type": "object",
+                        "properties": {
+                            "derniereModification": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "version": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            },
+            "Pagination": {
+                "type": "object",
+                "properties": {
+                    "currentPage": {
+                        "type": "integer"
+                    },
+                    "totalPages": {
+                        "type": "integer"
+                    },
+                    "totalItems": {
+                        "type": "integer"
+                    },
+                    "itemsPerPage": {
+                        "type": "integer"
+                    },
+                    "hasNext": {
+                        "type": "boolean"
+                    },
+                    "hasPrevious": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "Links": {
+                "type": "object",
+                "properties": {
+                    "self": {
+                        "type": "string"
+                    },
+                    "next": {
+                        "type": "string"
+                    },
+                    "first": {
+                        "type": "string"
+                    },
+                    "last": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ComptesResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Compte"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/Links"
+                    }
+                }
+            },
+            "AccountCreationSuccessResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Compte créé avec succès"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "example": "660f9511-f30c-52e5-b827-557766551111"
+                            },
+                            "numeroCompte": {
+                                "type": "string",
+                                "example": "C00123460"
+                            },
+                            "titulaire": {
+                                "type": "string",
+                                "example": "Cheikh Sy"
+                            },
+                            "type": {
+                                "type": "string",
+                                "example": "cheque"
+                            },
+                            "solde": {
+                                "type": "number",
+                                "example": 500000
+                            },
+                            "devise": {
+                                "type": "string",
+                                "example": "FCFA"
+                            },
+                            "dateCreation": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2025-10-19T10:30:00Z"
+                            },
+                            "statut": {
+                                "type": "string",
+                                "example": "actif"
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "properties": {
+                                    "derniereModification": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-10-19T10:30:00Z"
+                                    },
+                                    "version": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "AccountUpdateSuccessResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Compte mis à jour avec succès"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/Compte"
+                    }
+                }
+            },
+            "AccountDeleteSuccessResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Compte supprimé avec succès"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/Compte"
+                    }
+                }
+            },
+            "ValidationErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "error": {
+                        "type": "object",
+                        "properties": {
+                            "code": {
+                                "type": "string",
+                                "example": "VALIDATION_ERROR"
+                            },
+                            "message": {
+                                "type": "string",
+                                "example": "Les données fournies sont invalides"
+                            },
+                            "details": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                },
+                                "example": {
+                                    "soldeInitial": "Le solde initial doit être supérieur ou égal à 10000"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "UserWithClient": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "nom": {
+                        "type": "string"
+                    },
+                    "prenom": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "telephone": {
+                        "type": "string"
+                    },
+                    "client": {
+                        "type": "object"
+                    }
+                }
+            },
+            "ClientWithUserAndComptes": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "nom": {
+                                "type": "string"
+                            },
+                            "prenom": {
+                                "type": "string"
+                            },
+                            "email": {
+                                "type": "string"
+                            },
+                            "telephone": {
+                                "type": "string"
+                            },
+                            "nci": {
+                                "type": "string"
+                            },
+                            "adresse": {
+                                "type": "string"
+                            },
+                            "user": {
+                                "$ref": "#/components/schemas/UserWithClient"
+                            },
+                            "comptes": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Compte"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "UserWithAdmin": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "nom": {
+                        "type": "string"
+                    },
+                    "prenom": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "telephone": {
+                        "type": "string"
+                    },
+                    "admin": {
+                        "type": "object"
+                    }
+                }
+            },
+            "BlocageRequest": {
+                "type": "object",
+                "required": [
+                    "date_debut_blocage",
+                    "date_fin_blocage",
+                    "motif_blocage"
+                ],
+                "properties": {
+                    "date_debut_blocage": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-10-25"
+                    },
+                    "date_fin_blocage": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-10-28"
+                    },
+                    "motif_blocage": {
+                        "type": "string",
+                        "example": "Suspicion de fraude"
+                    }
+                }
+            },
+            "BlocageResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Données de blocage enregistrées"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/Compte"
+                    }
+                }
+            },
+            "ArchiveResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Compte archivé avec succès"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/Compte"
+                    }
+                }
+            },
+            "Transaction": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "code_transaction": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "depot",
+                            "retrait"
+                        ]
+                    },
+                    "montant": {
+                        "type": "number"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "compte_id": {
+                        "type": "string"
+                    },
+                    "agent_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "TransactionsResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Transaction"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                    }
+                }
+            },
+            "StoreTransactionRequest": {
+                "type": "object",
+                "required": [
+                    "type",
+                    "montant",
+                    "compte_id"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "depot",
+                            "retrait"
+                        ]
+                    },
+                    "montant": {
+                        "type": "number",
+                        "minimum": 0
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "compte_id": {
+                        "type": "string"
                     }
                 }
             }
         }
     }
+}
